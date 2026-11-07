@@ -210,17 +210,19 @@ async def game_loop():
         is_rigged = rig_next_round
         if is_rigged: rig_next_round = False
 
-        while crash_running:
-            await asyncio.sleep(0.1)
-            crash_mult += 0.03 * crash_mult
-            if is_rigged:
-                if crash_mult >= 100.0: crash_running = False
-            else:
-                if crash_mult > 10.0:
-                    if random.random() < 0.1: crash_running = False
-                else:
-                    if random.random() < 0.01 * crash_mult: crash_running = False
-                    
+while crash_running:
+    await asyncio.sleep(0.1)
+    crash_mult += 0.015 * crash_mult # <--- Скорость (было 0.03)
+    
+    if is_rigged:
+        if crash_mult >= 100.0: crash_running = False
+    else:
+        if crash_mult > 10.0:
+            # Шанс краша на высоких иксах (было 0.1)
+            if random.random() < 0.15: crash_running = False 
+        else:
+            # Шанс краша на низких иксах (было 0.01)
+            if random.random() < 0.02 * crash_mult: crash_running = False
             await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
             
         game_state = "crashed"
@@ -250,6 +252,20 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
 # ===== БОТ И АДМИНКА =====
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
+    args = message.text.split()
+    user_id = str(message.from_user.id)
+    
+    # Проверка рефералки
+    if len(args) > 1 and args[1].startswith("ref"):
+        referrer_id = args[1].replace("ref", "")
+        if referrer_id != user_id:
+            # Начисляем пригласившему
+            update_balance(referrer_id, 5)
+            try: 
+                await bot.send_message(referrer_id, "🎉 По твоей ссылке зашел друг! Тебе начислено +5 💎")
+            except: 
+                pass
+
     kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🚀 Играть", web_app=WebAppInfo(url=WEB_APP_URL))], [InlineKeyboardButton(text="🆘 Поддержка", url=f"tg://user?id={ADMIN_ID}")]])
     await message.answer("Добро пожаловать в Legendstars!", reply_markup=kb)
 
@@ -301,6 +317,26 @@ async def cmd_broadcast(message: Message):
         try: await bot.send_message(uid, text); count += 1; await asyncio.sleep(0.05)
         except: pass
     await message.answer(f"✅ Отправлено {count} игрокам.")
+
+@dp.message(Command("setpromo"))
+async def cmd_setpromo(message: Message):
+    if message.from_user.id != ADMIN_ID: return
+    try:
+        parts = message.text.split()
+        if len(parts) < 3:
+            await message.answer("❌ Формат: /setpromo КОД СУММА\nПример: /setpromo START 500")
+            return
+            
+        code = parts[1].upper()
+        amount = int(parts[2])
+        
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO promos (code, amount) VALUES (?, ?)", (code, amount))
+        conn.commit(); conn.close()
+        
+        await message.answer(f"✅ Промокод <code>{code}</code> на <b>{amount} 💎</b> создан!")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
 
 @app.get("/", response_class=HTMLResponse)
 def read_index():
