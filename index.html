@@ -226,16 +226,24 @@
             if (res.success) { loadBalance(); document.getElementById('withdraw-amount').value = ''; }
         }
 
-        function buyCrystals(amount) {
-            fetch('/api/buy', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: String(userId), amount: amount })
-            });
+        async function buyCrystals(amount) {
+    try {
+        const res = await fetch('/api/buy', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: String(userId), amount: amount })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            tg.showAlert("Ошибка при создании счета. Проверь настройки бота.");
         }
+    } catch (e) {
+        tg.showAlert("Ошибка сети");
+    }
+        } 
 
         function getRefLink() {
-            const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbotstart=ref${userId}&text=Залетай!`;
-            tg.openTelegramLink(link);
+    const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbot?start=ref${userId}&text=Залетай в Legendstars!`;
+    tg.openTelegramLink(link);
         }
 
         // ===== CS:GO КЕЙСЫ =====
