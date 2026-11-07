@@ -39,8 +39,8 @@ def get_balance(uid):
     c.execute("SELECT balance FROM users WHERE uid=?", (str(uid),))
     row = c.fetchone()
     if not row:
-        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 100))
-        conn.commit(); balance = 100
+        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 30))
+        conn.commit(); balance = 30
     else: balance = row[0]
     conn.close(); return balance
 
@@ -133,9 +133,21 @@ async def api_action(req: UserAction):
         return {"success": True, "win": win, "new_balance": get_balance(req.user_id)}
 
     elif req.action == "buy":
-        stars = req.amount // 5
-        await bot.send_invoice(req.user_id, f"{req.amount} Кристаллов", "Покупка", f"buy_{req.amount}", "XTR", [LabeledPrice(label="Кристаллы", amount=stars)], provider_token="")
+    stars = req.amount // 5
+    try:
+        await bot.send_invoice(
+            chat_id=req.user_id, 
+            title=f"{req.amount} Кристаллов", 
+            description="Покупка валюты", 
+            payload=f"buy_{req.amount}", 
+            currency="XTR", 
+            prices=[LabeledPrice(label="Кристаллы", amount=stars)], 
+            provider_token=""
+        )
         return {"success": True}
+    except Exception as e:
+        print(f"ОШИБКА ОПЛАТЫ: {e}") # Выведет ошибку в логи Render
+        return {"success": False, "msg": str(e)}
         
     elif req.action == "top":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
