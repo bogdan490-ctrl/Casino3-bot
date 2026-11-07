@@ -39,6 +39,7 @@ def get_balance(uid):
     c.execute("SELECT balance FROM users WHERE uid=?", (str(uid),))
     row = c.fetchone()
     if not row:
+        # ИЗМЕНЕНО: ТЕПЕРЬ НОВИЧКАМ ДАЕТ 30 АЛМАЗОВ
         c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 30))
         conn.commit(); balance = 30
     else: balance = row[0]
@@ -94,7 +95,7 @@ async def api_action(req: UserAction):
     elif req.action == "withdraw":
         balance = get_balance(req.user_id)
         if balance >= req.amount >= 1000:
-            update_balance(req.user_id, -req.amount) # Списываем сразу (замораживаем)
+            update_balance(req.user_id, -req.amount)
             stars = req.amount // 10
             kb = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"appr_{req.user_id}_{req.amount}_{stars}"),
@@ -112,12 +113,10 @@ async def api_action(req: UserAction):
         
         update_balance(req.user_id, -price)
         
-        # Новая система: падают алмазы и предметы
         choices = ["🗑 Мусор", "🥉 Бронза", "🥈 Серебро", "🥇 Золото", "💎 Алмаз", "👑 Корона", "💰 +10 💎", "💰 +50 💎", "💰 +100 💎"]
-        weights = [40, 25, 15, 8, 5, 2, 3, 1.5, 0.5] # Шансы
+        weights = [40, 25, 15, 8, 5, 2, 3, 1.5, 0.5]
         item = random.choices(choices, weights=weights, k=1)[0]
         
-        # Если выпали алмазы, начисляем
         if "+10" in item: update_balance(req.user_id, 10)
         elif "+50" in item: update_balance(req.user_id, 50)
         elif "+100" in item: update_balance(req.user_id, 100)
@@ -132,22 +131,23 @@ async def api_action(req: UserAction):
         update_balance(req.user_id, win)
         return {"success": True, "win": win, "new_balance": get_balance(req.user_id)}
 
+    # ИСПРАВЛЕННЫЙ БЛОК ОПЛАТЫ С ВЫВОДОМ ОШИБОК
     elif req.action == "buy":
-    stars = req.amount // 5
-    try:
-        await bot.send_invoice(
-            chat_id=req.user_id, 
-            title=f"{req.amount} Кристаллов", 
-            description="Покупка валюты", 
-            payload=f"buy_{req.amount}", 
-            currency="XTR", 
-            prices=[LabeledPrice(label="Кристаллы", amount=stars)], 
-            provider_token=""
-        )
-        return {"success": True}
-    except Exception as e:
-        print(f"ОШИБКА ОПЛАТЫ: {e}") # Выведет ошибку в логи Render
-        return {"success": False, "msg": str(e)}
+        stars = req.amount // 5
+        try:
+            await bot.send_invoice(
+                chat_id=req.user_id, 
+                title=f"{req.amount} Кристаллов", 
+                description="Покупка валюты", 
+                payload=f"buy_{req.amount}", 
+                currency="XTR", 
+                prices=[LabeledPrice(label="Кристаллы", amount=stars)], 
+                provider_token=""
+            )
+            return {"success": True}
+        except Exception as e:
+            print(f"ОШИБКА ОПЛАТЫ: {e}")
+            return {"success": False, "msg": str(e)}
         
     elif req.action == "top":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
@@ -156,7 +156,6 @@ async def api_action(req: UserAction):
         res = [{"id": u, "bal": b} for u, b in top]
         return {"success": True, "top": res}
 
-# Обработка кнопок админа (Подтвердить/Отклонить)
 @dp.callback_query(F.data.startswith("appr_"))
 async def admin_approve(cb: CallbackQuery):
     if cb.from_user.id != ADMIN_ID: return
@@ -168,7 +167,7 @@ async def admin_approve(cb: CallbackQuery):
 async def admin_decline(cb: CallbackQuery):
     if cb.from_user.id != ADMIN_ID: return
     _, uid, amount = cb.data.split("_")
-    update_balance(uid, int(amount)) # Возвращаем алмазы
+    update_balance(uid, int(amount))
     await bot.send_message(uid, f"❌ Вывод отклонен. Алмазы возвращены на баланс.")
     await cb.message.edit_text(f"❌ Выплата {amount} 💎 отклонена. Алмазы возвращены.")
 
