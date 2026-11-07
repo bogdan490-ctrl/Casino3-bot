@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Lucky Cases</title>
+    <style>
+        body { background: #0f0f13; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
+        .balance { font-size: 24px; font-weight: bold; color: #a78bfa; background: #1c1c24; padding: 10px; border-radius: 15px; margin-bottom: 20px; }
+        .cases { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .case { background: #1c1c24; padding: 15px; border-radius: 15px; cursor: pointer; flex: 1; border: 2px solid #2a2a35; }
+        .case:active { border-color: #7c3aed; }
+        .case img { width: 60px; height: 60px; }
+        .case .name { font-size: 12px; margin-top: 5px; font-weight: bold; }
+        .case .price { color: #a78bfa; font-size: 11px; }
+        #result { font-size: 20px; min-height: 60px; font-weight: bold; margin: 20px 0; }
+        .btn { background: #7c3aed; color: white; border: none; padding: 15px; border-radius: 15px; font-size: 16px; width: 100%; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="balance">Баланс: <span id="balance">0</span> 💎</div>
+    <div class="cases">
+        <div class="case" onclick="openCase('bronze')">
+            <img src="https://cdn-icons-png.flaticon.com/512/9943/9943612.png">
+            <div class="name">Бронза</div><div class="price">50 💎</div>
+        </div>
+        <div class="case" onclick="openCase('silver')">
+            <img src="https://cdn-icons-png.flaticon.com/512/9943/9943613.png">
+            <div class="name">Серебро</div><div class="price">150 💎</div>
+        </div>
+        <div class="case" onclick="openCase('gold')">
+            <img src="https://cdn-icons-png.flaticon.com/512/9943/9943614.png">
+            <div class="name">Золото</div><div class="price">500 💎</div>
+        </div>
+    </div>
+    <div id="result">Выбери кейс</div>
+    <button class="btn" onclick="buyCrystals()">💳 Купить 500 💎</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready(); tg.expand();
+        let userId = tg.initDataUnsafe?.user?.id || 12345;
+
+        async function loadBalance() {
+            const res = await fetch(`/api/balance/${userId}`);
+            const data = await res.json();
+            document.getElementById('balance').innerText = data.balance;
+        }
+
+        async function openCase(caseId) {
+            document.getElementById('result').innerText = "Крутим... 🎰";
+            const res = await fetch('/api/open_case', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, case_id: caseId })
+            });
+            const data = await res.json();
+            if (data.error) {
+                tg.showAlert(data.error);
+                document.getElementById('result').innerText = "Ошибка";
+            } else {
+                document.getElementById('result').innerHTML = `Выпало:<br><span style="font-size:30px">${data.item}</span>`;
+                loadBalance();
+            }
+        }
+
+        function buyCrystals() {
+            tg.sendData(JSON.stringify({ action: "buy_crystals" }));
+        }
+        loadBalance();
+    </script>
+</body>
+</html>
