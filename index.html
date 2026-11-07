@@ -228,18 +228,18 @@
 
         async function buyCrystals(amount) {
     try {
-        const res = await fetch('/api/buy', {
+        const res = await fetch('/api/action', { // <--- ИЗМЕНЕНО НА /api/action
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: String(userId), amount: amount })
+            body: JSON.stringify({ user_id: String(userId), action: "buy", amount: amount })
         });
         const data = await res.json();
-        if (!data.success) {
-            tg.showAlert("Ошибка при создании счета. Проверь настройки бота.");
+        if (data.success === false) {
+            tg.showAlert("Ошибка: " + data.msg);
         }
     } catch (e) {
-        tg.showAlert("Ошибка сети");
+        tg.showAlert("Сетевая ошибка");
     }
-        } 
+        }
 
         function getRefLink() {
     const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbot?start=ref${userId}&text=Залетай в Legendstars!`;
