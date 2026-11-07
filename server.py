@@ -93,24 +93,36 @@ async def api_action(req: UserAction):
 
     elif req.action == "withdraw":
         balance = get_balance(req.user_id)
-        if balance >= 1000:
-            try:
-                chat = await bot.get_chat(req.user_id)
-                username = f"@{chat.username}" if chat.username else "Нет юзернейма"
-            except: username = "Скрыт"
-            await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nID: <code>{req.user_id}</code>\nЮзер: {username}\nСумма: 1000 💎\nВыдать: 100 ⭐")
-            return {"success": True, "msg": f"✅ Заявка на вывод 1000 💎 создана. Ждите 100 ⭐"}
-        return {"success": False, "msg": "❌ Минимум для вывода 1000 💎"}
+        if balance >= req.amount >= 1000:
+            update_balance(req.user_id, -req.amount) # Списываем сразу (замораживаем)
+            stars = req.amount // 10
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"appr_{req.user_id}_{req.amount}_{stars}"),
+                 InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decl_{req.user_id}_{req.amount}")]
+            ])
+            await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nID: <code>{req.user_id}</code>\nСумма: {req.amount} 💎\nВыдать: {stars} ⭐", reply_markup=kb)
+            return {"success": True, "msg": f"✅ Заявка на {req.amount} 💎 создана. Ожидайте."}
+        return {"success": False, "msg": "❌ Минимум 1000 💎"}
         
     elif req.action == "open_case":
         prices = {"bronze": 50, "silver": 150, "gold": 500}
-        items = {"bronze": ["🗑", "🥉", "🥈"], "silver": ["🥈", "🥇", "💎"], "gold": ["🥇", "💎", "👑"]}
         price = prices.get(req.case_id, 50)
         balance = get_balance(req.user_id)
         if balance < price: return {"success": False, "msg": "Недостаточно средств"}
+        
         update_balance(req.user_id, -price)
-        item = random.choice(items[req.case_id])
-        return {"success": True, "item": item, "new_balance": balance - price}
+        
+        # Новая система: падают алмазы и предметы
+        choices = ["🗑 Мусор", "🥉 Бронза", "🥈 Серебро", "🥇 Золото", "💎 Алмаз", "👑 Корона", "💰 +10 💎", "💰 +50 💎", "💰 +100 💎"]
+        weights = [40, 25, 15, 8, 5, 2, 3, 1.5, 0.5] # Шансы
+        item = random.choices(choices, weights=weights, k=1)[0]
+        
+        # Если выпали алмазы, начисляем
+        if "+10" in item: update_balance(req.user_id, 10)
+        elif "+50" in item: update_balance(req.user_id, 50)
+        elif "+100" in item: update_balance(req.user_id, 100)
+        
+        return {"success": True, "item": item, "new_balance": get_balance(req.user_id)}
 
     elif req.action == "spin":
         balance = get_balance(req.user_id)
@@ -124,6 +136,29 @@ async def api_action(req: UserAction):
         stars = req.amount // 5
         await bot.send_invoice(req.user_id, f"{req.amount} Кристаллов", "Покупка", f"buy_{req.amount}", "XTR", [LabeledPrice(label="Кристаллы", amount=stars)], provider_token="")
         return {"success": True}
+        
+    elif req.action == "top":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT uid, balance FROM users ORDER BY balance DESC LIMIT 10")
+        top = c.fetchall(); conn.close()
+        res = [{"id": u, "bal": b} for u, b in top]
+        return {"success": True, "top": res}
+
+# Обработка кнопок админа (Подтвердить/Отклонить)
+@dp.callback_query(F.data.startswith("appr_"))
+async def admin_approve(cb: CallbackQuery):
+    if cb.from_user.id != ADMIN_ID: return
+    _, uid, amount, stars = cb.data.split("_")
+    await bot.send_message(uid, f"✅ Вывод подтвержден! Вам начислено {stars} ⭐")
+    await cb.message.edit_text(f"✅ Выплата {amount} 💎 (выдано {stars}⭐) подтверждена.")
+
+@dp.callback_query(F.data.startswith("decl_"))
+async def admin_decline(cb: CallbackQuery):
+    if cb.from_user.id != ADMIN_ID: return
+    _, uid, amount = cb.data.split("_")
+    update_balance(uid, int(amount)) # Возвращаем алмазы
+    await bot.send_message(uid, f"❌ Вывод отклонен. Алмазы возвращены на баланс.")
+    await cb.message.edit_text(f"❌ Выплата {amount} 💎 отклонена. Алмазы возвращены.")
 
 @app.get("/api/balance/{user_id}")
 def api_balance(user_id: str): return {"balance": get_balance(user_id)}
@@ -143,7 +178,7 @@ async def payment_ok(message: Message):
 active_bets, player_names = {}, {}
 crash_mult, crash_running = 1.0, False
 clients, game_state = set(), "waiting"
-rig_next_round = False # Флаг для подкрутки
+rig_next_round = False
 
 async def broadcast(msg):
     for c in clients.copy():
@@ -161,20 +196,17 @@ async def game_loop():
         
         game_state = "flying"; crash_running = True
         await broadcast({"type": "start"})
-        
         is_rigged = rig_next_round
-        if is_rigged: rig_next_round = False # Сбрасываем флаг после старта
+        if is_rigged: rig_next_round = False
 
         while crash_running:
             await asyncio.sleep(0.1)
             crash_mult += 0.03 * crash_mult
-            
             if is_rigged:
-                if crash_mult >= 100.0: crash_running = False # Подкрутка на 100х
+                if crash_mult >= 100.0: crash_running = False
             else:
-                # Честный краш с защитой от больших иксов
                 if crash_mult > 10.0:
-                    if random.random() < 0.1: crash_running = False # На больших иксах шанс упасть выше
+                    if random.random() < 0.1: crash_running = False
                 else:
                     if random.random() < 0.01 * crash_mult: crash_running = False
                     
@@ -223,17 +255,15 @@ async def cmd_admin(message: Message):
 
 @dp.callback_query(F.data == "admin_give_self")
 async def admin_give_self(cb: CallbackQuery):
-    if cb.from_user.id != ADMIN_ID: return
-    update_balance(ADMIN_ID, 100)
-    await cb.message.answer(f"✅ Выдано 100 💎. Твой баланс: {get_balance(ADMIN_ID)}")
+    update_balance(ADMIN_ID, 10000)
+    await cb.message.answer(f"✅ Выдано 10 000 💎. Твой баланс: {get_balance(ADMIN_ID)}")
     await cb.answer()
 
 @dp.callback_query(F.data == "admin_rig")
 async def admin_rig(cb: CallbackQuery):
-    if cb.from_user.id != ADMIN_ID: return
     global rig_next_round
     rig_next_round = True
-    await cb.message.answer("🎰 <b>Ракетка подкручена!</b>\nСледующий раунд долетит до x100 и взорвется.")
+    await cb.message.answer("🎰 <b>Ракетка подкручена!</b>\nСледующий раунд долетит до x100.")
     await cb.answer()
 
 @dp.callback_query(F.data == "admin_stats")
@@ -260,24 +290,6 @@ async def cmd_broadcast(message: Message):
         try: await bot.send_message(uid, text); count += 1; await asyncio.sleep(0.05)
         except: pass
     await message.answer(f"✅ Отправлено {count} игрокам.")
-
-@dp.message(Command("give"))
-async def cmd_give(message: Message):
-    if message.from_user.id != ADMIN_ID: return
-    try:
-        parts = message.text.split(); update_balance(int(parts[1]), int(parts[2]))
-        await message.answer(f"✅ Выдано {parts[2]} 💎")
-    except: await message.answer("❌ /give ID СУММА")
-
-@dp.message(Command("setpromo"))
-async def cmd_setpromo(message: Message):
-    if message.from_user.id != ADMIN_ID: return
-    try:
-        parts = message.text.split()
-        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO promos (code, amount) VALUES (?, ?)", (parts[1].upper(), int(parts[2])))
-        conn.commit(); conn.close(); await message.answer(f"✅ Промокод {parts[1].upper()} создан!")
-    except: await message.answer("❌ /setpromo КОД СУММА")
 
 @app.get("/", response_class=HTMLResponse)
 def read_index():
