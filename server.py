@@ -2,6 +2,7 @@ import asyncio
 import random
 import os
 import json
+import sqlite3
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -9,7 +10,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, PreCheckoutQuery, LabeledPrice, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
+from aiogram.enums import ParseMode, ContentType
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -24,21 +25,48 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTM
 dp = Dispatcher(storage=MemoryStorage())
 app = FastAPI()
 
-users = {}
-promocodes = {"START": 500} # Базовый промокод на 500
+# ===== БАЗА ДАННЫХ =====
+DB_PATH = "casino.db"
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (uid TEXT PRIMARY KEY, balance INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, amount INTEGER)''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 def get_user(uid):
     uid = str(uid)
-    if uid not in users: users[uid] = {"balance": 100}
-    return users[uid]
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT balance FROM users WHERE uid=?", (uid,))
+    row = c.fetchone()
+    if not row:
+        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (uid, 100))
+        conn.commit()
+        balance = 100
+    else:
+        balance = row[0]
+    conn.close()
+    return {"balance": balance}
+
+def update_balance(uid, amount):
+    uid = str(uid)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("UPDATE users SET balance = balance + ? WHERE uid=?", (amount, uid))
+    conn.commit()
+    conn.close()
 
 class AdminStates(StatesGroup):
     waiting_for_user_id = State()
     waiting_for_amount = State()
 
-# ===== API ДЛЯ КЕЙСОВ =====
+# ===== API =====
 @app.get("/api/balance/{user_id}")
-def api_balance(user_id: str): return {"balance": get_user(user_id)["balance"]}
+def api_balance(user_id: str): return get_user(user_id)
 
 class OpenCaseRequest(BaseModel):
     user_id: str
@@ -53,8 +81,9 @@ def api_open_case(req: OpenCaseRequest):
     price = prices.get(req.case_id, 50)
     if user["balance"] < price: return {"error": "Недостаточно средств"}
     
-    user["balance"] -= price
-    return {"item": random.choice(items[req.case_id]), "balance": user["balance"]}
+    update_balance(req.user_id, -price)
+    item = random.choice(items[req.case_id])
+    return {"item": item, "balance": user["balance"] - price}
 
 @app.get("/", response_class=HTMLResponse)
 def read_index():
@@ -109,14 +138,14 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                 if game_state != "waiting": 
                     await websocket.send_json({"type": "error", "msg": "Ставки закрыты!"}); continue
                 if user["balance"] >= amount:
-                    user["balance"] -= amount
+                    update_balance(user_id, -amount)
                     active_bets[user_id] = amount
                 else: await websocket.send_json({"type": "error", "msg": "Недостаточно средств"})
             elif data.get("action") == "cashout":
                 if game_state == "flying" and user_id in active_bets:
                     bet = active_bets.pop(user_id)
                     win = int(bet * crash_multiplier)
-                    get_user(user_id)["balance"] += win
+                    update_balance(user_id, win)
                     await websocket.send_json({"type": "cashed_out", "win": win})
     except WebSocketDisconnect:
         connected_clients.remove(websocket)
@@ -129,14 +158,16 @@ async def cmd_start(message: Message):
     if len(args) > 1 and args[1].startswith("ref"):
         referrer_id = args[1].replace("ref", "")
         if referrer_id != user_id:
-            ref_user = get_user(referrer_id)
-            ref_user["balance"] += 5
-            try: await bot.send_message(referrer_id, "🎉 По твоей ссылке зашел друг! Тебе начислено +5 💎")
+            update_balance(referrer_id, 5)
+            try: await bot.send_message(referrer_id, "🎉 По твоей ссылке зашел друг! +5 💎")
             except: pass
-    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🚀 Открыть казино", web_app=WebAppInfo(url=WEB_APP_URL))]])
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🚀 Открыть казино", web_app=WebAppInfo(url=WEB_APP_URL))],
+        [InlineKeyboardButton(text="🆘 Поддержка", url=f"tg://user?id={ADMIN_ID}")]
+    ])
     await message.answer(f"Привет! Добро пожаловать в Legendstars.", reply_markup=kb)
 
-# ===== АДМИНКА =====
 @dp.message(Command("admin"))
 async def cmd_admin(message: Message):
     if message.from_user.id != ADMIN_ID: return
@@ -153,7 +184,11 @@ async def cmd_setpromo(message: Message):
         parts = message.text.split()
         code = parts[1].upper()
         amount = int(parts[2])
-        promocodes[code] = amount
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO promos (code, amount) VALUES (?, ?)", (code, amount))
+        conn.commit()
+        conn.close()
         await message.answer(f"✅ Промокод <code>{code}</code> на <b>{amount} 💎</b> создан!")
     except:
         await message.answer("❌ Формат: /setpromo КОД СУММА")
@@ -185,34 +220,41 @@ async def process_amount(message: Message, state: FSMContext):
     except: return await message.answer("Неверная сумма")
     data = await state.get_data()
     target_id = data.get("target_id")
-    user = get_user(target_id)
-    user["balance"] += amount
+    update_balance(target_id, amount)
     await message.answer(f"✅ Выдано {amount} 💎 игроку {target_id}.")
     await state.clear()
 
-# ===== ОБРАБОТКА MINI APP =====
-@dp.message(F.web_app_data)
+@dp.message(F.content_type == ContentType.WEB_APP_DATA)
 async def web_app_data(message: Message):
     data = json.loads(message.web_app_data.data)
     
     if data["action"] == "buy_crystals":
-        await bot.send_invoice(message.from_user.id, "500 Кристаллов", "Покупка валюты", "buy_500", "XTR", [LabeledPrice(label="Кристаллы", amount=250)])
+        await bot.send_invoice(
+            chat_id=message.from_user.id, title="500 Кристаллов", description="Покупка валюты", 
+            payload="buy_500", currency="XTR", prices=[LabeledPrice(label="Кристаллы", amount=250)], provider_token="" 
+        )
     
     elif data["action"] == "promo":
         code = data["code"].upper()
-        if code in promocodes:
-            amount = promocodes[code]
-            user = get_user(message.from_user.id)
-            user["balance"] += amount
-            del promocodes[code]
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT amount FROM promos WHERE code=?", (code,))
+        row = c.fetchone()
+        if row:
+            amount = row[0]
+            update_balance(message.from_user.id, amount)
+            c.execute("DELETE FROM promos WHERE code=?", (code,))
+            conn.commit()
+            conn.close()
             await message.answer(f"✅ Промокод активирован! +{amount} 💎")
         else:
-            await message.answer("❌ Неверный или уже использованный промокод")
+            conn.close()
+            await message.answer("❌ Неверный или использованный промокод")
             
     elif data["action"] == "withdraw":
         amount = data["amount"]
         if amount >= 1000:
-            stars_to_give = int(amount / 100)
+            stars_to_give = int(amount / 100) # Твой курс 1000 = 10 звезд
             await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nЮзер: {message.from_user.id}\nСумма: {amount} 💎\n\n<b>Переведи ему {stars_to_give} ⭐</b>")
             await message.answer(f"✅ Заявка на вывод {amount} 💎 создана. Ожидайте перевода {stars_to_give} ⭐.")
         else:
@@ -223,8 +265,7 @@ async def pre_checkout(query: PreCheckoutQuery): await query.answer(ok=True)
 
 @dp.message(F.successful_payment)
 async def payment_ok(message: Message):
-    user = get_user(message.from_user.id)
-    user["balance"] += 500
+    update_balance(message.from_user.id, 500)
     await message.answer("✅ Оплата прошла! +500 Кристаллов.")
 
 @app.on_event("startup")
