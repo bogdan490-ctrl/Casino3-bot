@@ -13,8 +13,10 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .balance-box { background: #121618; padding: 8px 15px; border-radius: 12px; font-weight: 900; font-size: 16px; border: 1px solid #1f2926; color: #10b981; display: flex; align-items: center; gap: 5px; }
         
-        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; overflow-x: auto; }
-        .tab-btn { flex: 1; background: transparent; border: none; color: #64748b; padding: 10px 5px; border-radius: 10px; font-weight: 700; font-size: 11px; transition: 0.3s; white-space: nowrap; }
+        /* НАВИГАЦИЯ (С ПРОКРУТКОЙ) */
+        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: 0 0 auto; background: transparent; border: none; color: #64748b; padding: 10px 15px; border-radius: 10px; font-weight: 700; font-size: 13px; transition: 0.3s; margin-right: 5px; }
         .tab-btn.active { background: #064e3b; color: #34d399; box-shadow: inset 0 0 10px rgba(52, 211, 153, 0.2); }
         
         .tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
@@ -50,7 +52,7 @@
         /* CS:GO Рулетка */
         .csgo-case { background: #0d1112; border: 1px solid #1f2926; border-radius: 15px; padding: 10px; overflow: hidden; position: relative; height: 100px; display: flex; align-items: center; margin-bottom: 15px; }
         .csgo-strip { display: flex; transition: transform 3.5s cubic-bezier(0.1, 0.7, 0.1, 1); }
-        .csgo-item { min-width: 90px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 40px; border-right: 1px solid #1f2926; }
+        .csgo-item { min-width: 90px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; border-right: 1px solid #1f2926; color: #10b981; text-align: center;}
         .csgo-center-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #10b981; transform: translateX(-50%); z-index: 5; box-shadow: 0 0 10px #10b981; }
         
         /* Ежедневка */
@@ -136,11 +138,15 @@
             Баланс: <span id="prof-bal" style="color: #10b981; font-weight: 900;">0</span> 💎
         </div>
         
+        <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="showTop()">🏆 Топ игроков</button>
+        
         <input type="text" id="promo-code" class="promo-input" placeholder="ПРОМОКОД">
         <button class="btn" style="margin-bottom: 15px;" onclick="activatePromo()">АКТИВИРОВАТЬ</button>
         
+        <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 1000)">
+        <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="requestWithdraw()">💸 Вывести</button>
+        
         <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга (+5 💎)</button>
-        <button class="btn btn-secondary" onclick="requestWithdraw()">💸 Вывести 1000 💎 (100 ⭐)</button>
     </div>
 
     <!-- ИНФО -->
@@ -152,7 +158,7 @@
             • <b>Рефералка:</b> +5 💎 за друга.<br>
             • <b>Бонус:</b> +10 💎 каждый день.<br><br>
             <i>Игра создана исключительно для развлечения. Не тратьте последние деньги!</i>
-            <i>Версия 0.1<i>
+            <i>Возникла проблема? - тебе в тех.поддержку</i>
         </div>
     </div>
 
@@ -203,9 +209,21 @@
             if (res.success) loadBalance();
         }
 
+        async function showTop() {
+            const res = await apiAction("top");
+            if (res.success) {
+                let text = "<b>🏆 Топ-10 игроков:</b>\n\n";
+                res.top.forEach((u, i) => text += `${i+1}. ID: ${u.id} — ${u.bal} 💎\n`);
+                tg.showAlert(text);
+            }
+        }
+
         async function requestWithdraw() {
-            const res = await apiAction("withdraw");
+            const amount = parseInt(document.getElementById('withdraw-amount').value);
+            if (!amount || amount < 1000) return tg.showAlert("Минимум 1000 💎");
+            const res = await apiAction("withdraw", { amount: amount });
             tg.showAlert(res.msg);
+            if (res.success) { loadBalance(); document.getElementById('withdraw-amount').value = ''; }
         }
 
         function buyCrystals(amount) {
@@ -228,13 +246,13 @@
             
             const strip = document.getElementById('csgo-strip');
             strip.innerHTML = '';
-            const icons = ['🗑', '🥉', '🥈', '🥇', '💎', '👑'];
+            const icons = ['🗑', '🥉', '🥈', '🥇', '💎', '👑', '10', '50', '100'];
             
             let winIndex = 30;
             for (let i = 0; i < 40; i++) {
                 const el = document.createElement('div');
                 el.className = 'csgo-item';
-                el.innerText = (i === winIndex) ? res.item : icons[Math.floor(Math.random() * icons.length)];
+                el.innerText = (i === winIndex) ? res.item.replace("💰 ", "") : icons[Math.floor(Math.random() * icons.length)];
                 strip.appendChild(el);
             }
             
@@ -247,7 +265,10 @@
                 strip.style.transform = `translateX(-${offset}px)`;
             }, 50);
             
-            setTimeout(() => { loadBalance(); }, 3600);
+            setTimeout(() => { 
+                tg.showAlert(`🎉 Выпало: ${res.item}`);
+                loadBalance(); 
+            }, 3600);
         }
 
         async function spinWheel() {
