@@ -17,6 +17,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 import uvicorn
 
+# ===== НАСТРОЙКИ =====
 BOT_TOKEN = "9280034478:AAHgmjytU79yLOsnh7HnksSOrlzBZ2rXNgA"
 ADMIN_ID = 8491030557
 WEB_APP_URL = "https://casino-bot-ojim.onrender.com"
@@ -39,7 +40,6 @@ def get_balance(uid):
     c.execute("SELECT balance FROM users WHERE uid=?", (str(uid),))
     row = c.fetchone()
     if not row:
-        # ИЗМЕНЕНО: ТЕПЕРЬ НОВИЧКАМ ДАЕТ 30 АЛМАЗОВ
         c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 30))
         conn.commit(); balance = 30
     else: balance = row[0]
@@ -113,6 +113,7 @@ async def api_action(req: UserAction):
         
         update_balance(req.user_id, -price)
         
+        # Шансы на выпадение (чем меньше вес, тем реже)
         choices = ["🗑 Мусор", "🥉 Бронза", "🥈 Серебро", "🥇 Золото", "💎 Алмаз", "👑 Корона", "💰 +10 💎", "💰 +50 💎", "💰 +100 💎"]
         weights = [40, 25, 15, 8, 5, 2, 3, 1.5, 0.5]
         item = random.choices(choices, weights=weights, k=1)[0]
@@ -131,7 +132,6 @@ async def api_action(req: UserAction):
         update_balance(req.user_id, win)
         return {"success": True, "win": win, "new_balance": get_balance(req.user_id)}
 
-    # ИСПРАВЛЕННЫЙ БЛОК ОПЛАТЫ С ВЫВОДОМ ОШИБОК
     elif req.action == "buy":
         stars = req.amount // 5
         try:
@@ -141,12 +141,12 @@ async def api_action(req: UserAction):
                 description="Покупка валюты", 
                 payload=f"buy_{req.amount}", 
                 currency="XTR", 
-                prices=[LabeledPrice(label="Кристаллы", amount=stars)], 
-                provider_token=""
+                prices=[LabeledPrice(label="Кристаллы", amount=stars)]
             )
             return {"success": True}
         except Exception as e:
-            print(f"ОШИБКА ОПЛАТЫ: {e}")
+            # Если ошибка, бот напишет тебе в ЛС
+            await bot.send_message(ADMIN_ID, f"❌ ОШИБКА ОПЛАТЫ: {e}")
             return {"success": False, "msg": str(e)}
         
     elif req.action == "top":
@@ -185,7 +185,7 @@ async def payment_ok(message: Message):
         update_balance(message.from_user.id, amount)
         await message.answer(f"✅ Оплата прошла! +{amount} Кристаллов.")
 
-# ===== РАКЕТКА =====
+# ===== РАКЕТКА (С ИСПРАВЛЕННЫМИ ШАНСАМИ И СКОРОСТЬЮ) =====
 active_bets, player_names = {}, {}
 crash_mult, crash_running = 1.0, False
 clients, game_state = set(), "waiting"
@@ -210,19 +210,21 @@ async def game_loop():
         is_rigged = rig_next_round
         if is_rigged: rig_next_round = False
 
-while crash_running:
-    await asyncio.sleep(0.1)
-    crash_mult += 0.015 * crash_mult # <--- Скорость (было 0.03)
-    
-    if is_rigged:
-        if crash_mult >= 100.0: crash_running = False
-    else:
-        if crash_mult > 10.0:
-            # Шанс краша на высоких иксах (было 0.1)
-            if random.random() < 0.15: crash_running = False 
-        else:
-            # Шанс краша на низких иксах (было 0.01)
-            if random.random() < 0.02 * crash_mult: crash_running = False
+        while crash_running:
+            await asyncio.sleep(0.1)
+            # СКОРОСТЬ: 0.015 (медленнее, чем было)
+            crash_mult += 0.015 * crash_mult 
+            
+            if is_rigged:
+                if crash_mult >= 100.0: crash_running = False
+            else:
+                if crash_mult > 10.0:
+                    # ШАНС КРАША НА ВЫСОКИХ ИКСАХ (15%)
+                    if random.random() < 0.15: crash_running = False
+                else:
+                    # ШАНС КРАША НА НИЗКИХ ИКСАХ
+                    if random.random() < 0.02 * crash_mult: crash_running = False
+                    
             await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
             
         game_state = "crashed"
@@ -255,16 +257,13 @@ async def cmd_start(message: Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
     
-    # Проверка рефералки
+    # РЕФЕРАЛКА
     if len(args) > 1 and args[1].startswith("ref"):
         referrer_id = args[1].replace("ref", "")
         if referrer_id != user_id:
-            # Начисляем пригласившему
             update_balance(referrer_id, 5)
-            try: 
-                await bot.send_message(referrer_id, "🎉 По твоей ссылке зашел друг! Тебе начислено +5 💎")
-            except: 
-                pass
+            try: await bot.send_message(referrer_id, "🎉 По твоей ссылке зашел друг! +5 💎")
+            except: pass
 
     kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🚀 Играть", web_app=WebAppInfo(url=WEB_APP_URL))], [InlineKeyboardButton(text="🆘 Поддержка", url=f"tg://user?id={ADMIN_ID}")]])
     await message.answer("Добро пожаловать в Legendstars!", reply_markup=kb)
@@ -318,6 +317,7 @@ async def cmd_broadcast(message: Message):
         except: pass
     await message.answer(f"✅ Отправлено {count} игрокам.")
 
+# ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ПРОМО
 @dp.message(Command("setpromo"))
 async def cmd_setpromo(message: Message):
     if message.from_user.id != ADMIN_ID: return
@@ -326,14 +326,11 @@ async def cmd_setpromo(message: Message):
         if len(parts) < 3:
             await message.answer("❌ Формат: /setpromo КОД СУММА\nПример: /setpromo START 500")
             return
-            
         code = parts[1].upper()
         amount = int(parts[2])
-        
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("INSERT OR REPLACE INTO promos (code, amount) VALUES (?, ?)", (code, amount))
         conn.commit(); conn.close()
-        
         await message.answer(f"✅ Промокод <code>{code}</code> на <b>{amount} 💎</b> создан!")
     except Exception as e:
         await message.answer(f"❌ Ошибка: {e}")
