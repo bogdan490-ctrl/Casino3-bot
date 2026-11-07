@@ -133,21 +133,21 @@ async def api_action(req: UserAction):
         return {"success": True, "win": win, "new_balance": get_balance(req.user_id)}
 
     elif req.action == "buy":
-        stars = req.amount // 5
-        try:
-            await bot.send_invoice(
-                chat_id=req.user_id, 
-                title=f"{req.amount} Кристаллов", 
-                description="Покупка валюты", 
-                payload=f"buy_{req.amount}", 
-                currency="XTR", 
-                prices=[LabeledPrice(label="Кристаллы", amount=stars)]
-            )
-            return {"success": True}
-        except Exception as e:
-            # Если ошибка, бот напишет тебе в ЛС
-            await bot.send_message(ADMIN_ID, f"❌ ОШИБКА ОПЛАТЫ: {e}")
-            return {"success": False, "msg": str(e)}
+    stars = req.amount // 5
+    try:
+        await bot.send_invoice(
+            chat_id=req.user_id, 
+            title=f"Покупка {req.amount} 💎", 
+            description="Пополнение баланса", 
+            payload=f"buy_{req.amount}", 
+            currency="XTR", 
+            prices=[LabeledPrice(label="Кристаллы", amount=stars)]
+            # ВОТ ТУТ МЫ УБРАЛИ provider_token="" ВООБЩЕ
+        )
+        return {"success": True}
+    except Exception as e:
+        print(f"ОШИБКА ОПЛАТЫ: {e}")
+        return {"success": False, "msg": str(e)}
         
     elif req.action == "top":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
