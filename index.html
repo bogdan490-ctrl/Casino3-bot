@@ -8,59 +8,109 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap');
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background: #0a0a0f; color: #fff; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { 
+            background: #090a0b; 
+            color: #e2e8f0; 
+            font-family: 'Montserrat', sans-serif; 
+            margin: 0; padding: 15px; 
+            display: flex; flex-direction: column; 
+            height: 100vh; overflow: hidden; 
+        }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .balance-box { background: linear-gradient(135deg, #2b2b36, #1c1c24); padding: 8px 15px; border-radius: 12px; font-weight: 900; font-size: 16px; border: 1px solid #3c3c4a; display: flex; align-items: center; gap: 5px; }
-        .balance-box span { color: #a78bfa; }
+        .balance-box { 
+            background: #121618; 
+            padding: 8px 15px; 
+            border-radius: 12px; 
+            font-weight: 900; 
+            font-size: 16px; 
+            border: 1px solid #1f2926; 
+            color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+            display: flex; align-items: center; gap: 5px;
+        }
         
-        .tabs { display: flex; background: #15151d; padding: 5px; border-radius: 15px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; background: transparent; border: none; color: #666; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 12px; transition: 0.3s; }
-        .tab-btn.active { background: #7c3aed; color: #fff; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4); }
+        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; }
+        .tab-btn { 
+            flex: 1; background: transparent; border: none; color: #64748b; 
+            padding: 10px; border-radius: 10px; font-weight: 700; font-size: 12px; transition: 0.3s; 
+        }
+        .tab-btn.active { 
+            background: #064e3b; color: #34d399; 
+            box-shadow: inset 0 0 10px rgba(52, 211, 153, 0.2);
+        }
         
         .tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
         .tab-content.active { display: flex; }
         
-        .crash-area { flex: 1; background: #15151d; border-radius: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #23232e; margin-bottom: 10px; min-height: 200px; }
-        .multiplier { font-size: 56px; font-weight: 900; color: #00e676; z-index: 11; font-family: monospace; text-shadow: 0 0 30px rgba(0, 230, 118, 0.4); }
-        .multiplier.crashed { color: #ff5252; animation: shake 0.5s; }
-        .status-text { font-size: 12px; color: #888; font-weight: 700; margin-top: 5px; z-index: 11; letter-spacing: 1px; }
+        /* Ракетка */
+        .crash-area { 
+            flex: 1; background: #0d1112; border-radius: 20px; 
+            position: relative; overflow: hidden; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            border: 1px solid #1f2926; margin-bottom: 10px; min-height: 200px; 
+        }
+        .grid-overlay { position: absolute; inset: 0; background-image: linear-gradient(#1f2926 1px, transparent 1px), linear-gradient(90deg, #1f2926 1px, transparent 1px); background-size: 30px 30px; opacity: 0.2; }
         
-        .rocket { font-size: 40px; position: absolute; bottom: -50px; left: 0; transition: bottom 0.1s linear, left 0.1s linear; z-index: 10; transform: rotate(-45deg); }
+        .multiplier { font-size: 56px; font-weight: 900; color: #10b981; z-index: 11; font-family: monospace; text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        .multiplier.crashed { color: #ef4444; animation: shake 0.5s; text-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+        .status-text { font-size: 12px; color: #64748b; font-weight: 700; margin-top: 5px; z-index: 11; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .rocket { font-size: 40px; position: absolute; bottom: -50px; left: 0; transition: bottom 0.1s linear, left 0.1s linear; z-index: 10; transform: rotate(-45deg); filter: drop-shadow(0 0 10px #10b981); }
         
         .controls { display: flex; gap: 10px; margin-bottom: 10px; }
-        .input-bet { flex: 1; background: #15151d; border: 1px solid #23232e; color: #fff; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: 'Montserrat'; text-align: center; outline: none; }
+        .input-bet { 
+            flex: 1; background: #0d1112; border: 1px solid #1f2926; color: #fff; 
+            padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; 
+            font-family: 'Montserrat'; text-align: center; outline: none; 
+        }
+        .input-bet:focus { border-color: #10b981; }
         
-        .btn { background: #7c3aed; color: #fff; border: none; padding: 15px; border-radius: 15px; font-size: 14px; font-weight: 900; width: 100%; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { background: #23232e; color: #555; }
-        .btn.cashout { background: #00e676; color: #000; display: none; animation: pulse 1s infinite; }
-        .btn-secondary { background: #1c1c24; border: 1px solid #3c3c4a; color: #a78bfa; margin-top: 5px; padding: 10px; }
+        .btn { 
+            background: #064e3b; color: #34d399; border: 1px solid #10b981; 
+            padding: 15px; border-radius: 15px; font-size: 14px; font-weight: 900; 
+            width: 100%; cursor: pointer; transition: 0.2s; text-transform: uppercase;
+        }
+        .btn:active { transform: scale(0.98); background: #047857; }
+        .btn:disabled { background: #121618; border-color: #1f2926; color: #475569; }
+        .btn.cashout { background: #10b981; color: #000; display: none; animation: pulse 1s infinite; border: none; }
+        .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 5px; }
+        .btn-secondary:active { background: #1f2926; }
         
+        /* Кейсы */
         .cases { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .case { background: #15151d; border: 2px solid #23232e; padding: 10px 5px; border-radius: 15px; text-align: center; cursor: pointer; }
-        .case:active { transform: scale(0.95); border-color: #7c3aed; }
+        .case { 
+            background: #0d1112; border: 2px solid #1f2926; padding: 15px 5px; 
+            border-radius: 15px; text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .case:active { transform: scale(0.95); border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
         .case-icon { font-size: 30px; }
-        .case-name { font-size: 11px; font-weight: 700; color: #ccc; margin-top: 5px; }
-        .case-price { font-size: 11px; color: #a78bfa; font-weight: 900; }
+        .case-name { font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 5px; }
+        .case-price { font-size: 11px; color: #10b981; font-weight: 900; }
         
-        .result-box { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; text-align: center; min-height: 80px; }
+        .result-box { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; text-align: center; min-height: 80px; color: #34d399; }
         .history { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
-        .hist-item { background: #23232e; color: #00e676; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-        .hist-item.crashed { color: #ff5252; }
+        .hist-item { background: #121618; color: #10b981; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #1f2926; }
+        .hist-item.crashed { color: #ef4444; }
         
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         
-        .info-text { font-size: 13px; color: #ccc; line-height: 1.5; text-align: left; background: #15151d; padding: 15px; border-radius: 12px; margin-bottom: 10px; }
-        .promo-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #0a0a0f; color: #fff; margin-bottom: 10px; text-align: center; font-weight: bold; }
+        .info-text { font-size: 13px; color: #94a3b8; line-height: 1.5; text-align: left; background: #0d1112; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1f2926; }
+        .info-text b { color: #e2e8f0; }
+        .promo-input { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #1f2926; 
+            background: #090a0b; color: #10b981; margin-bottom: 10px; 
+            text-align: center; font-weight: 900; text-transform: uppercase; font-family: 'Montserrat';
+        }
+        .promo-input:focus { border-color: #10b981; outline: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="balance-box">💎 <span id="balance">0</span></div>
-        <button class="tab-btn" style="background: #23232e; padding: 8px 15px; border-radius: 10px;" onclick="switchTab('profile', event)">👤 Профиль</button>
+        <button class="tab-btn" style="background: #121618; border: 1px solid #1f2926; padding: 8px 15px; border-radius: 10px; flex: none;" onclick="switchTab('profile', event)">👤 Профиль</button>
     </div>
 
     <div class="tabs">
@@ -72,6 +122,7 @@
     <!-- РАКЕТКА -->
     <div id="tab-crash" class="tab-content active">
         <div class="crash-area" id="crash-area">
+            <div class="grid-overlay"></div>
             <div class="rocket" id="rocket">🚀</div>
             <div class="multiplier" id="crash-multiplier">x1.00</div>
             <div class="status-text" id="crash-status">Ожидание...</div>
@@ -101,12 +152,11 @@
     <div id="tab-info" class="tab-content">
         <div class="info-text">
             <b>📜 Правила и Информация:</b><br><br>
-            • <b>Вывод средств:</b> Минимальная сумма вывода — <b>1000 💎</b>. Это связано с высокой комиссией сети Telegram (Fragment) и защитой от спама.<br><br>
-            • <b>Курс:</b> 1000 💎 = 100 ⭐.<br><br>
-            • <b>Реферальная система:</b> Приглашай друзей и получай <b>+5 💎</b> за каждого активного игрока!<br><br>
+            • <b>Вывод средств:</b> Минимальная сумма — <b>1000 💎</b>. Курс: <b>1000 💎 = 100 ⭐</b>.<br><br>
+            • <b>Пополнение:</b> 500 💎 = 250 ⭐.<br><br>
+            • <b>Реферальная система:</b> Приглашай друзей и получай <b>+5 💎</b> за каждого!<br><br>
             • <b>Промокод:</b> Вводи коды в профиле, чтобы получить бонусы.<br><br>
             <i>Игра создана исключительно для развлечения. Не тратьте последние деньги!</i>
-            <i>Версия: 0.1</i>
         </div>
         <button class="btn btn-secondary" onclick="switchTab('crash', event)">Понятно</button>
     </div>
@@ -116,7 +166,7 @@
         <div class="info-text">
             <b>👤 Твой профиль</b><br><br>
             ID: <span id="prof-id">...</span><br>
-            Баланс: <span id="prof-bal">0</span> 💎
+            Баланс: <span id="prof-bal" style="color: #10b981; font-weight: 900;">0</span> 💎
         </div>
         
         <input type="text" id="promo-code" class="promo-input" placeholder="ВВЕДИ ПРОМОКОД">
@@ -160,11 +210,11 @@
             try {
                 const res = await fetch('/api/open_case', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, case_id: caseId })
+                    body: JSON.stringify({ user_id: String(userId), case_id: String(caseId) })
                 });
                 const data = await res.json();
                 if (data.error) { tg.showAlert(data.error); document.getElementById('case-result').innerText = "Ошибка"; }
-                else { document.getElementById('case-result').innerHTML = `Выпало:<br><span style="font-size:40px">${data.item}</span>`; loadBalance(); }
+                else { document.getElementById('case-result').innerHTML = `Выпало:<br><span style="font-size:40px; color:#10b981;">${data.item}</span>`; loadBalance(); }
             } catch (e) { tg.showAlert("Ошибка сети"); }
         }
 
@@ -177,7 +227,7 @@
 
         // РЕФЕРАЛКА
         function getRefLink() {
-            const link = `https://t.me/share/url?url=https://t.me/ВашБот?start=${userId}&text=Залетай в Legendstars!`;
+            const link = `https://t.me/share/url?url=https://t.me/ВашБот?start=ref${userId}&text=Залетай в Legendstars!`;
             tg.openTelegramLink(link);
         }
 
@@ -188,7 +238,7 @@
             tg.sendData(JSON.stringify({ action: "promo", code: code })); tg.close();
         }
 
-        // РАКЕТКА (Crash)
+        // РАКЕТКА
         let isBetPlaced = false;
         let gameState = "waiting";
         let currentMult = 1.0;
