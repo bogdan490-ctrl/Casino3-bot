@@ -8,102 +8,53 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap');
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background: #090a0b; 
-            color: #e2e8f0; 
-            font-family: 'Montserrat', sans-serif; 
-            margin: 0; padding: 15px; 
-            display: flex; flex-direction: column; 
-            height: 100vh; overflow: hidden; 
-        }
+        body { background: #090a0b; color: #e2e8f0; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .balance-box { 
-            background: #121618; 
-            padding: 8px 15px; 
-            border-radius: 12px; 
-            font-weight: 900; 
-            font-size: 16px; 
-            border: 1px solid #1f2926; 
-            color: #10b981;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
-            display: flex; align-items: center; gap: 5px;
-        }
+        .balance-box { background: #121618; padding: 8px 15px; border-radius: 12px; font-weight: 900; font-size: 16px; border: 1px solid #1f2926; color: #10b981; display: flex; align-items: center; gap: 5px; }
         
-        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; }
-        .tab-btn { 
-            flex: 1; background: transparent; border: none; color: #64748b; 
-            padding: 10px; border-radius: 10px; font-weight: 700; font-size: 12px; transition: 0.3s; 
-        }
-        .tab-btn.active { 
-            background: #064e3b; color: #34d399; 
-            box-shadow: inset 0 0 10px rgba(52, 211, 153, 0.2);
-        }
+        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; overflow-x: auto; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #64748b; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 12px; transition: 0.3s; white-space: nowrap; }
+        .tab-btn.active { background: #064e3b; color: #34d399; box-shadow: inset 0 0 10px rgba(52, 211, 153, 0.2); }
         
         .tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
         .tab-content.active { display: flex; }
         
         /* Ракетка */
-        .crash-area { 
-            flex: 1; background: #0d1112; border-radius: 20px; 
-            position: relative; overflow: hidden; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; 
-            border: 1px solid #1f2926; margin-bottom: 10px; min-height: 200px; 
-        }
-        .grid-overlay { position: absolute; inset: 0; background-image: linear-gradient(#1f2926 1px, transparent 1px), linear-gradient(90deg, #1f2926 1px, transparent 1px); background-size: 30px 30px; opacity: 0.2; }
-        
-        .multiplier { font-size: 56px; font-weight: 900; color: #10b981; z-index: 11; font-family: monospace; text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
-        .multiplier.crashed { color: #ef4444; animation: shake 0.5s; text-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
-        .status-text { font-size: 12px; color: #64748b; font-weight: 700; margin-top: 5px; z-index: 11; letter-spacing: 1px; text-transform: uppercase; }
-        
+        .crash-area { flex: 1; background: #0d1112; border-radius: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #1f2926; margin-bottom: 10px; min-height: 160px; }
+        .multiplier { font-size: 50px; font-weight: 900; color: #10b981; z-index: 11; font-family: monospace; text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        .multiplier.crashed { color: #ef4444; animation: shake 0.5s; }
+        .status-text { font-size: 12px; color: #64748b; font-weight: 700; margin-top: 5px; z-index: 11; text-transform: uppercase; }
         .rocket { font-size: 40px; position: absolute; bottom: -50px; left: 0; transition: bottom 0.1s linear, left 0.1s linear; z-index: 10; transform: rotate(-45deg); filter: drop-shadow(0 0 10px #10b981); }
         
-        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
-        .input-bet { 
-            flex: 1; background: #0d1112; border: 1px solid #1f2926; color: #fff; 
-            padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; 
-            font-family: 'Montserrat'; text-align: center; outline: none; 
-        }
-        .input-bet:focus { border-color: #10b981; }
+        /* Лайв-список */
+        .live-bets { background: #121618; border-radius: 12px; padding: 10px; margin-bottom: 10px; max-height: 80px; overflow-y: auto; border: 1px solid #1f2926; font-size: 12px;}
+        .live-bet-item { display: flex; justify-content: space-between; border-bottom: 1px solid #1f2926; padding: 4px 0; color: #94a3b8;}
+        .live-bet-item span:last-child { color: #10b981; font-weight: bold;}
         
-        .btn { 
-            background: #064e3b; color: #34d399; border: 1px solid #10b981; 
-            padding: 15px; border-radius: 15px; font-size: 14px; font-weight: 900; 
-            width: 100%; cursor: pointer; transition: 0.2s; text-transform: uppercase;
-        }
+        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
+        .input-bet { flex: 1; background: #0d1112; border: 1px solid #1f2926; color: #fff; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; text-align: center; outline: none; }
+        .btn { background: #064e3b; color: #34d399; border: 1px solid #10b981; padding: 15px; border-radius: 15px; font-size: 14px; font-weight: 900; width: 100%; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
         .btn:active { transform: scale(0.98); background: #047857; }
         .btn:disabled { background: #121618; border-color: #1f2926; color: #475569; }
         .btn.cashout { background: #10b981; color: #000; display: none; animation: pulse 1s infinite; border: none; }
         .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 5px; }
-        .btn-secondary:active { background: #1f2926; }
         
         /* Кейсы */
-        .cases { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .case { 
-            background: #0d1112; border: 2px solid #1f2926; padding: 15px 5px; 
-            border-radius: 15px; text-align: center; cursor: pointer; transition: 0.2s;
-        }
-        .case:active { transform: scale(0.95); border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .cases { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .case { background: #0d1112; border: 2px solid #1f2926; padding: 15px 5px; border-radius: 15px; text-align: center; cursor: pointer; }
+        .case:active { transform: scale(0.95); border-color: #10b981; }
         .case-icon { font-size: 30px; }
         .case-name { font-size: 11px; font-weight: 700; color: #94a3b8; margin-top: 5px; }
         .case-price { font-size: 11px; color: #10b981; font-weight: 900; }
         
-        .result-box { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; text-align: center; min-height: 80px; color: #34d399; }
-        .history { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
-        .hist-item { background: #121618; color: #10b981; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #1f2926; }
-        .hist-item.crashed { color: #ef4444; }
+        .result-box { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; text-align: center; min-height: 50px; color: #34d399; }
+        
+        .info-text { font-size: 13px; color: #94a3b8; line-height: 1.5; text-align: left; background: #0d1112; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1f2926; }
+        .promo-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #1f2926; background: #090a0b; color: #10b981; margin-bottom: 10px; text-align: center; font-weight: 900; text-transform: uppercase; }
         
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        
-        .info-text { font-size: 13px; color: #94a3b8; line-height: 1.5; text-align: left; background: #0d1112; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1f2926; }
-        .info-text b { color: #e2e8f0; }
-        .promo-input { 
-            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #1f2926; 
-            background: #090a0b; color: #10b981; margin-bottom: 10px; 
-            text-align: center; font-weight: 900; text-transform: uppercase; font-family: 'Montserrat';
-        }
-        .promo-input:focus { border-color: #10b981; outline: none; }
     </style>
 </head>
 <body>
@@ -116,71 +67,79 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('crash', event)">🚀 Ракетка</button>
         <button class="tab-btn" onclick="switchTab('cases', event)">📦 Кейсы</button>
+        <button class="tab-btn" onclick="switchTab('tasks', event)">📋 Задания</button>
         <button class="tab-btn" onclick="switchTab('info', event)">ℹ️ Инфо</button>
     </div>
 
-    <!-- РАКЕТКА -->
     <div id="tab-crash" class="tab-content active">
         <div class="crash-area" id="crash-area">
-            <div class="grid-overlay"></div>
             <div class="rocket" id="rocket">🚀</div>
             <div class="multiplier" id="crash-multiplier">x1.00</div>
             <div class="status-text" id="crash-status">Ожидание...</div>
         </div>
-        
+        <div class="live-bets" id="live-bets"></div>
         <div class="controls">
             <input type="number" id="bet-amount" class="input-bet" placeholder="Сумма" value="50">
             <button class="btn" id="btn-bet" onclick="placeBet()" style="width: 40%; margin:0;">В ИГРУ</button>
         </div>
-        
         <button class="btn cashout" id="btn-cashout" onclick="cashOut()">ЗАБРАТЬ</button>
-        <div class="history" id="history"></div>
     </div>
 
-    <!-- КЕЙСЫ -->
     <div id="tab-cases" class="tab-content">
         <div class="cases">
             <div class="case" onclick="openCase('bronze', 50)"><div class="case-icon">🥉</div><div class="case-name">Бронза</div><div class="case-price">50 💎</div></div>
             <div class="case" onclick="openCase('silver', 150)"><div class="case-icon">🥈</div><div class="case-name">Серебро</div><div class="case-price">150 💎</div></div>
             <div class="case" onclick="openCase('gold', 500)"><div class="case-icon">🥇</div><div class="case-name">Золото</div><div class="case-price">500 💎</div></div>
+            <div class="case" onclick="buyVIP()"><div class="case-icon">👑</div><div class="case-name">VIP Кейс</div><div class="case-price">50 ⭐</div></div>
         </div>
         <div class="result-box" id="case-result">Выбери кейс</div>
-        <button class="btn" onclick="buyCrystals()">💳 ПОПОЛНИТЬ</button>
+        <button class="btn" onclick="buyCrystals()">💳 ПОПОЛНИТЬ (250⭐)</button>
+    </div>
+    
+    <div id="tab-tasks" class="tab-content">
+        <div class="info-text">
+            <b>📋 Задания:</b><br><br>
+            • Ежедневный вход: <b>+10 💎</b><br>
+            • Крутить колесо удачи: <b>от 0 до 500 💎</b><br>
+            • Пригласить друга: <b>+5 💎</b><br>
+        </div>
+        <button class="btn btn-secondary" onclick="spinWheel()">🎡 Крутить колесо (50 💎)</button>
     </div>
 
-    <!-- ИНФО -->
     <div id="tab-info" class="tab-content">
         <div class="info-text">
-            <b>📜 Правила и Информация:</b><br><br>
-            • <b>Вывод средств:</b> Минимальная сумма — <b>1000 💎</b>. Курс: <b>1000 💎 = 100 ⭐</b>.<br><br>
-            • <b>Пополнение:</b> 500 💎 = 250 ⭐.<br><br>
-            • <b>Реферальная система:</b> Приглашай друзей и получай <b>+5 💎</b> за каждого!<br><br>
-            • <b>Промокод:</b> Вводи коды в профиле, чтобы получить бонусы.<br><br>
-            <i>Игра создана исключительно для развлечения. Не тратьте последние деньги!</i>
+            <b>📜 Информация:</b><br><br>
+            • <b>Вывод:</b> от 1000 💎 (1000 💎 = 100 ⭐).<br>
+            • <b>Пополнение:</b> 500 💎 = 250 ⭐.<br>
+            • <b>Рефералка:</b> +5 💎 за друга.<br>
+            • <b>Бонус:</b> +10 💎 каждый день.<br><br>
+            <i>Игра для развлечения!</i>
         </div>
         <button class="btn btn-secondary" onclick="switchTab('crash', event)">Понятно</button>
     </div>
 
-    <!-- ПРОФИЛЬ -->
     <div id="tab-profile" class="tab-content">
         <div class="info-text">
-            <b>👤 Твой профиль</b><br><br>
+            <b>👤 Профиль</b><br><br>
             ID: <span id="prof-id">...</span><br>
             Баланс: <span id="prof-bal" style="color: #10b981; font-weight: 900;">0</span> 💎
         </div>
         
-        <input type="text" id="promo-code" class="promo-input" placeholder="ВВЕДИ ПРОМОКОД">
+        <button class="btn" style="margin-bottom: 10px; background: #10b981; color: #000;" onclick="getBonus()">🎁 Забрать 10 💎 (Ежедневно)</button>
+        
+        <input type="text" id="promo-code" class="promo-input" placeholder="ПРОМОКОД">
         <button class="btn" style="margin-bottom: 10px;" onclick="activatePromo()">АКТИВИРОВАТЬ</button>
         
-        <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга (+5 💎)</button>
-        <button class="btn btn-secondary" onclick="requestWithdraw()">💸 Вывести (от 1000 💎)</button>
-        <button class="btn btn-secondary" onclick="buyCrystals()">💳 Пополнить баланс</button>
+        <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга</button>
+        <button class="btn btn-secondary" onclick="requestWithdraw()">💸 Вывести</button>
+        <button class="btn btn-secondary" onclick="buyCrystals()">💳 Пополнить</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
         let userId = tg.initDataUnsafe?.user?.id || 12345;
+        let userName = tg.initDataUnsafe?.user?.first_name || "Игрок";
         let currentBalance = 0;
         let ws;
         
@@ -203,42 +162,71 @@
             if(event) event.target.classList.add('active');
         }
 
-        // КЕЙСЫ
-        async function openCase(caseId, price) {
-            if (currentBalance < price) return tg.showAlert("Недостаточно средств!");
-            document.getElementById('case-result').innerText = "Крутим... 🎰";
-            try {
-                const res = await fetch('/api/open_case', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: String(userId), case_id: String(caseId) })
-                });
-                const data = await res.json();
-                if (data.error) { tg.showAlert(data.error); document.getElementById('case-result').innerText = "Ошибка"; }
-                else { document.getElementById('case-result').innerHTML = `Выпало:<br><span style="font-size:40px; color:#10b981;">${data.item}</span>`; loadBalance(); }
-            } catch (e) { tg.showAlert("Ошибка сети"); }
+        // ===== API ЗАПРОСЫ =====
+        async function apiAction(action, data = {}) {
+            const res = await fetch('/api/action', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: String(userId), action: action, ...data })
+            });
+            return await res.json();
         }
 
-        // ПОКУПКА И ВЫВОД
-        function buyCrystals() { tg.sendData(JSON.stringify({ action: "buy_crystals" })); tg.close(); }
-        function requestWithdraw() {
-            if (currentBalance < 1000) return tg.showAlert("Минимальная сумма вывода — 1000 💎. Играй и копи!");
-            tg.sendData(JSON.stringify({ action: "withdraw", amount: currentBalance })); tg.close();
+        async function getBonus() {
+            const res = await apiAction("bonus");
+            tg.showAlert(res.msg);
+            if (res.success) loadBalance();
         }
 
-        // РЕФЕРАЛКА
+        async function activatePromo() {
+            const code = document.getElementById('promo-code').value.trim();
+            if (!code) return;
+            const res = await apiAction("promo", { code: code });
+            tg.showAlert(res.msg);
+            if (res.success) loadBalance();
+        }
+
+        async function spinWheel() {
+            const res = await apiAction("spin");
+            tg.showAlert(res.msg);
+            if (res.success) loadBalance();
+        }
+
+        async function requestWithdraw() {
+            const res = await apiAction("withdraw");
+            tg.showAlert(res.msg);
+        }
+
+        function buyCrystals() {
+            fetch('/api/buy', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: String(userId), item: "crystals" })
+            });
+        }
+        
+        function buyVIP() {
+            fetch('/api/buy', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: String(userId), item: "vip_case" })
+            });
+        }
+
         function getRefLink() {
-            const link = `https://t.me/share/url?url=https://t.me/ВашБот?start=ref${userId}&text=Залетай в Legendstars!`;
+            const link = `https://t.me/share/url?url=https://t.me/ВашБот?start=ref${userId}&text=Залетай!`;
             tg.openTelegramLink(link);
         }
 
-        // ПРОМОКОД
-        function activatePromo() {
-            const code = document.getElementById('promo-code').value.trim().toUpperCase();
-            if (!code) return;
-            tg.sendData(JSON.stringify({ action: "promo", code: code })); tg.close();
+        async function openCase(caseId, price) {
+            if (currentBalance < price) return tg.showAlert("Мало денег!");
+            document.getElementById('case-result').innerText = "Крутим... 🎰";
+            const res = await apiAction("open_case", { case_id: caseId });
+            if (!res.success) return tg.showAlert(res.msg);
+            setTimeout(() => {
+                document.getElementById('case-result').innerHTML = `Выпало:<br><span style="font-size:40px; color:#10b981;">${res.item}</span>`;
+                loadBalance();
+            }, 500); 
         }
 
-        // РАКЕТКА
+        // ===== РАКЕТКА =====
         let isBetPlaced = false;
         let gameState = "waiting";
         let currentMult = 1.0;
@@ -250,23 +238,34 @@
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 const elMult = document.getElementById('crash-multiplier');
-                const elStatus = document.getElementById('crash-status');
                 const elRocket = document.getElementById('rocket');
                 const elArea = document.getElementById('crash-area');
                 const btnBet = document.getElementById('btn-bet');
                 const btnCashout = document.getElementById('btn-cashout');
+                const liveBets = document.getElementById('live-bets');
 
                 if (data.type === 'waiting') {
                     gameState = "waiting";
-                    elStatus.innerText = `Ожидание: ${data.countdown} сек.`;
+                    document.getElementById('crash-status').innerText = `Ожидание: ${data.countdown} сек.`;
                     elMult.innerText = "x1.00"; elMult.className = "multiplier";
                     elRocket.style.bottom = "-50px"; elRocket.style.left = "0px"; elRocket.style.opacity = "1";
                     btnBet.disabled = isBetPlaced ? true : false;
                     if(!isBetPlaced) btnCashout.style.display = 'none';
+                    
+                    liveBets.innerHTML = '';
+                    if (Object.keys(data.players).length === 0) {
+                        liveBets.innerHTML = '<div style="color:#64748b; text-align:center;">Пока никто не ставил</div>';
+                    } else {
+                        for (let pid in data.players) {
+                            const pName = data.names[pid] || "Игрок";
+                            const pAmount = data.players[pid];
+                            liveBets.innerHTML += `<div class="live-bet-item"><span>👤 ${pName}</span><span>${pAmount} 💎</span></div>`;
+                        }
+                    }
                 }
                 else if (data.type === 'start') {
                     gameState = "flying";
-                    elStatus.innerText = "РАКЕТА ЛЕТИТ!";
+                    document.getElementById('crash-status').innerText = "РАКЕТА ЛЕТИТ!";
                     btnBet.disabled = true;
                     elRocket.style.opacity = "1";
                     if (isBetPlaced) btnCashout.style.display = 'block';
@@ -274,22 +273,21 @@
                 else if (data.type === 'tick') {
                     currentMult = data.multiplier;
                     elMult.innerText = `x${currentMult.toFixed(2)}`;
-                    let bottom = Math.min((currentMult - 1) * 50, elArea.offsetHeight - 80);
-                    let left = Math.min((currentMult - 1) * 40, elArea.offsetWidth - 80);
+                    let bottom = Math.min((currentMult - 1) * 30, elArea.offsetHeight - 80);
+                    let left = Math.min((currentMult - 1) * 25, elArea.offsetWidth - 80);
                     elRocket.style.bottom = `${bottom}px`; elRocket.style.left = `${left}px`;
                 } 
                 else if (data.type === 'crash') {
                     gameState = "crashed";
-                    elStatus.innerText = `КРАШ НА x${data.multiplier.toFixed(2)}`;
+                    document.getElementById('crash-status').innerText = `КРАШ НА x${data.multiplier.toFixed(2)}`;
                     elMult.innerText = `x${data.multiplier.toFixed(2)}`; elMult.className = "multiplier crashed";
                     elRocket.style.opacity = "0"; btnCashout.style.display = 'none'; btnBet.disabled = false;
-                    isBetPlaced = false; addHistory(data.multiplier, true);
+                    isBetPlaced = false;
                 }
                 else if (data.type === 'cashed_out') {
                     tg.showAlert(`Вывел ${data.win} 💎 на x${currentMult.toFixed(2)}!`);
-                    addHistory(currentMult, false); loadBalance(); btnCashout.style.display = 'none'; btnBet.disabled = true;
+                    loadBalance(); btnCashout.style.display = 'none'; btnBet.disabled = true;
                 }
-                else if (data.type === 'error') { tg.showAlert(data.msg); btnBet.disabled = false; isBetPlaced = false; }
             };
             ws.onclose = () => setTimeout(connectWS, 3000);
         }
@@ -298,8 +296,8 @@
             if (isBetPlaced || gameState !== "waiting") return;
             const amount = parseInt(document.getElementById('bet-amount').value);
             if (isNaN(amount) || amount <= 0) return tg.showAlert("Введи сумму");
-            if (currentBalance < amount) return tg.showAlert("Недостаточно средств!");
-            ws.send(JSON.stringify({ action: 'bet', amount: amount }));
+            if (currentBalance < amount) return tg.showAlert("Мало денег!");
+            ws.send(JSON.stringify({ action: 'bet', amount: amount, name: userName }));
             document.getElementById('btn-bet').disabled = true;
             isBetPlaced = true; loadBalance();
         }
@@ -307,14 +305,6 @@
         function cashOut() {
             if (!isBetPlaced || gameState !== "flying") return;
             ws.send(JSON.stringify({ action: 'cashout' }));
-        }
-
-        function addHistory(mult, isCrash) {
-            const hist = document.getElementById('history');
-            const div = document.createElement('div');
-            div.className = `hist-item ${isCrash ? 'crashed' : ''}`;
-            div.innerText = `x${mult.toFixed(2)}`;
-            hist.prepend(div); if (hist.children.length > 10) hist.lastChild.remove();
         }
 
         loadBalance(); connectWS();
