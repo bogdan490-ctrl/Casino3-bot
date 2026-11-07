@@ -1,6 +1,7 @@
 import asyncio
 import random
 import os
+import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -14,6 +15,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 import uvicorn
 
+# ===== НАСТРОЙКИ =====
 BOT_TOKEN = "9280034478:AAHgmjytU79yLOsnh7HnksSOrlzBZ2rXNgA"
 ADMIN_ID = 8491030557
 WEB_APP_URL = "https://casino-bot-ojim.onrender.com"
@@ -23,6 +25,8 @@ dp = Dispatcher(storage=MemoryStorage())
 app = FastAPI()
 
 users = {}
+promocodes = {"START": 500} # Базовый промокод на 500
+
 def get_user(uid):
     uid = str(uid)
     if uid not in users: users[uid] = {"balance": 100}
@@ -32,6 +36,7 @@ class AdminStates(StatesGroup):
     waiting_for_user_id = State()
     waiting_for_amount = State()
 
+# ===== API ДЛЯ КЕЙСОВ =====
 @app.get("/api/balance/{user_id}")
 def api_balance(user_id: str): return {"balance": get_user(user_id)["balance"]}
 
@@ -44,8 +49,10 @@ def api_open_case(req: OpenCaseRequest):
     user = get_user(req.user_id)
     prices = {"bronze": 50, "silver": 150, "gold": 500}
     items = {"bronze": ["🗑 Мусор", "🥉 Бронза", "🥈 Серебро"], "silver": ["🥈 Серебро", "🥇 Золото", "💎 Алмаз"], "gold": ["🥇 Золото", "💎 Алмаз", "👑 Корона"]}
+    
     price = prices.get(req.case_id, 50)
     if user["balance"] < price: return {"error": "Недостаточно средств"}
+    
     user["balance"] -= price
     return {"item": random.choice(items[req.case_id]), "balance": user["balance"]}
 
@@ -75,6 +82,9 @@ async def game_loop():
         for i in range(10, 0, -1):
             await broadcast({"type": "waiting", "count": len(active_bets), "countdown": i})
             await asyncio.sleep(1)
+        
+        if not active_bets: continue
+        
         game_state = "flying"; crash_running = True
         await broadcast({"type": "start"})
         while crash_running:
@@ -116,43 +126,97 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 async def cmd_start(message: Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
-    
-    # Проверяем реферальную ссылку
     if len(args) > 1 and args[1].startswith("ref"):
         referrer_id = args[1].replace("ref", "")
         if referrer_id != user_id:
             ref_user = get_user(referrer_id)
-            ref_user["balance"] += 5 # +5 алмазов рефереру
+            ref_user["balance"] += 5
             try: await bot.send_message(referrer_id, "🎉 По твоей ссылке зашел друг! Тебе начислено +5 💎")
             except: pass
-
     kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🚀 Открыть казино", web_app=WebAppInfo(url=WEB_APP_URL))]])
     await message.answer(f"Привет! Добро пожаловать в Legendstars.", reply_markup=kb)
 
+# ===== АДМИНКА =====
+@dp.message(Command("admin"))
+async def cmd_admin(message: Message):
+    if message.from_user.id != ADMIN_ID: return
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💰 Выдать себе", callback_data="admin_give_self")],
+        [InlineKeyboardButton(text="🎁 Выдать игроку", callback_data="admin_give_user")],
+    ])
+    await message.answer("👑 <b>Админ-панель</b>", reply_markup=kb)
+
+@dp.message(Command("setpromo"))
+async def cmd_setpromo(message: Message):
+    if message.from_user.id != ADMIN_ID: return
+    try:
+        parts = message.text.split()
+        code = parts[1].upper()
+        amount = int(parts[2])
+        promocodes[code] = amount
+        await message.answer(f"✅ Промокод <code>{code}</code> на <b>{amount} 💎</b> создан!")
+    except:
+        await message.answer("❌ Формат: /setpromo КОД СУММА")
+
+@dp.callback_query(F.data == "admin_give_self")
+async def admin_give_self(callback: CallbackQuery, state: FSMContext):
+    if callback.from_user.id != ADMIN_ID: return
+    await state.update_data(target_id=ADMIN_ID)
+    await state.set_state(AdminStates.waiting_for_amount)
+    await callback.message.edit_text("Введи сумму для себя:")
+
+@dp.callback_query(F.data == "admin_give_user")
+async def admin_give_user(callback: CallbackQuery, state: FSMContext):
+    if callback.from_user.id != ADMIN_ID: return
+    await state.set_state(AdminStates.waiting_for_user_id)
+    await callback.message.edit_text("Введи ID игрока:")
+
+@dp.message(AdminStates.waiting_for_user_id)
+async def process_user_id(message: Message, state: FSMContext):
+    try: uid = int(message.text.strip())
+    except: return await message.answer("Неверный ID")
+    await state.update_data(target_id=uid)
+    await state.set_state(AdminStates.waiting_for_amount)
+    await message.answer("Введи сумму:")
+
+@dp.message(AdminStates.waiting_for_amount)
+async def process_amount(message: Message, state: FSMContext):
+    try: amount = int(message.text.strip())
+    except: return await message.answer("Неверная сумма")
+    data = await state.get_data()
+    target_id = data.get("target_id")
+    user = get_user(target_id)
+    user["balance"] += amount
+    await message.answer(f"✅ Выдано {amount} 💎 игроку {target_id}.")
+    await state.clear()
+
+# ===== ОБРАБОТКА MINI APP =====
 @dp.message(F.web_app_data)
 async def web_app_data(message: Message):
-    import json
     data = json.loads(message.web_app_data.data)
     
-    # ПОПОЛНЕНИЕ
     if data["action"] == "buy_crystals":
         await bot.send_invoice(message.from_user.id, "500 Кристаллов", "Покупка валюты", "buy_500", "XTR", [LabeledPrice(label="Кристаллы", amount=250)])
     
-    # ПРОМОКОД
     elif data["action"] == "promo":
-        if data["code"] == "START":
+        code = data["code"].upper()
+        if code in promocodes:
+            amount = promocodes[code]
             user = get_user(message.from_user.id)
-            user["balance"] += 50
-            await message.answer("✅ Промокод активирован! +50 💎")
+            user["balance"] += amount
+            del promocodes[code]
+            await message.answer(f"✅ Промокод активирован! +{amount} 💎")
         else:
-            await message.answer("❌ Неверный промокод")
+            await message.answer("❌ Неверный или уже использованный промокод")
             
-    # ВЫВОД
     elif data["action"] == "withdraw":
         amount = data["amount"]
         if amount >= 1000:
-            await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nЮзер: {message.from_user.id}\nСумма: {amount} 💎\n\nПереведи ему {amount // 100} ⭐")
-            await message.answer(f"✅ Заявка на вывод {amount} 💎 создана. Ожидайте перевода Stars (до 24ч).")
+            stars_to_give = int(amount / 100)
+            await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nЮзер: {message.from_user.id}\nСумма: {amount} 💎\n\n<b>Переведи ему {stars_to_give} ⭐</b>")
+            await message.answer(f"✅ Заявка на вывод {amount} 💎 создана. Ожидайте перевода {stars_to_give} ⭐.")
+        else:
+            await message.answer("❌ Минимальная сумма вывода: 1000 💎")
 
 @dp.pre_checkout_query()
 async def pre_checkout(query: PreCheckoutQuery): await query.answer(ok=True)
