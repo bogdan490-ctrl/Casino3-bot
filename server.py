@@ -19,7 +19,7 @@ BOT_TOKEN = "9280034478:AAHgmjytU79yLOsnh7HnksSOrlzBZ2rXNgA"
 ADMIN_ID = 8491030557  # Твой ID
 
 # ВСТАВЬ СЮДА ССЫЛКУ ОТ RENDER
-WEB_APP_URL = "https://твой-сервис.onrender.com"
+WEB_APP_URL = "https://casino-bot-ojim.onrender.com"
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
