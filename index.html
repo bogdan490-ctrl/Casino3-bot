@@ -4,71 +4,200 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <title>Lucky Cases</title>
+    <title>Legendstars Casino</title>
     <style>
-        body { background: #0f0f13; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
-        .balance { font-size: 24px; font-weight: bold; color: #a78bfa; background: #1c1c24; padding: 10px; border-radius: 15px; margin-bottom: 20px; }
-        .cases { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .case { background: #1c1c24; padding: 15px; border-radius: 15px; cursor: pointer; flex: 1; border: 2px solid #2a2a35; }
+        body { background: #0f0f13; color: #fff; font-family: sans-serif; margin: 0; padding: 15px; text-align: center; }
+        .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { background: #1c1c24; border: none; color: #888; padding: 10px 20px; border-radius: 10px; font-weight: bold; font-size: 14px; }
+        .tab-btn.active { background: #7c3aed; color: #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .balance { font-size: 22px; font-weight: bold; color: #a78bfa; background: #1c1c24; padding: 10px; border-radius: 15px; margin-bottom: 15px; }
+        
+        /* Кейсы */
+        .cases { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .case { background: #1c1c24; padding: 10px; border-radius: 15px; cursor: pointer; flex: 1; border: 2px solid #2a2a35; }
         .case:active { border-color: #7c3aed; }
-        .case img { width: 60px; height: 60px; }
         .case .name { font-size: 12px; margin-top: 5px; font-weight: bold; }
         .case .price { color: #a78bfa; font-size: 11px; }
-        #result { font-size: 20px; min-height: 60px; font-weight: bold; margin: 20px 0; }
-        .btn { background: #7c3aed; color: white; border: none; padding: 15px; border-radius: 15px; font-size: 16px; width: 100%; font-weight: bold; }
+        
+        /* Ракетка */
+        .crash-container { background: #1c1c24; padding: 20px; border-radius: 15px; margin-bottom: 15px; }
+        .multiplier { font-size: 48px; font-weight: bold; color: #00e676; margin: 10px 0; text-shadow: 0 0 20px rgba(0, 230, 118, 0.5); }
+        .crash-status { font-size: 16px; color: #aaa; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .input-row input { flex: 1; background: #0f0f13; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 10px; font-size: 16px; }
+        
+        .btn { background: #7c3aed; color: white; border: none; padding: 15px; border-radius: 15px; font-size: 16px; width: 100%; font-weight: bold; margin-top: 10px; }
+        .btn:active { background: #6d28d9; }
+        .btn.cashout { background: #00e676; color: #000; display: none; }
+        .btn:disabled { background: #333; color: #666; }
+        
+        #result { font-size: 18px; min-height: 30px; font-weight: bold; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="balance">Баланс: <span id="balance">0</span> 💎</div>
-    <div class="cases">
-        <div class="case" onclick="openCase('bronze')">
-            <img src="https://cdn-icons-png.flaticon.com/512/9943/9943612.png">
-            <div class="name">Бронза</div><div class="price">50 💎</div>
-        </div>
-        <div class="case" onclick="openCase('silver')">
-            <img src="https://cdn-icons-png.flaticon.com/512/9943/9943613.png">
-            <div class="name">Серебро</div><div class="price">150 💎</div>
-        </div>
-        <div class="case" onclick="openCase('gold')">
-            <img src="https://cdn-icons-png.flaticon.com/512/9943/9943614.png">
-            <div class="name">Золото</div><div class="price">500 💎</div>
-        </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('cases')">📦 Кейсы</button>
+        <button class="tab-btn" onclick="switchTab('crash')">🚀 Ракетка</button>
     </div>
-    <div id="result">Выбери кейс</div>
-    <button class="btn" onclick="buyCrystals()">💳 Купить 500 💎</button>
+
+    <!-- ВКЛАДКА КЕЙСЫ -->
+    <div id="tab-cases" class="tab-content active">
+        <div class="cases">
+            <div class="case" onclick="openCase('bronze', 50)">
+                <div style="font-size:30px">🥉</div>
+                <div class="name">Бронза</div><div class="price">50 💎</div>
+            </div>
+            <div class="case" onclick="openCase('silver', 150)">
+                <div style="font-size:30px">🥈</div>
+                <div class="name">Серебро</div><div class="price">150 💎</div>
+            </div>
+            <div class="case" onclick="openCase('gold', 500)">
+                <div style="font-size:30px">🥇</div>
+                <div class="name">Золото</div><div class="price">500 💎</div>
+            </div>
+        </div>
+        <div id="result">Выбери кейс</div>
+        <button class="btn" onclick="buyCrystals()">💳 Пополнить баланс</button>
+    </div>
+
+    <!-- ВКЛАДКА РАКЕТКА -->
+    <div id="tab-crash" class="tab-content">
+        <div class="crash-container">
+            <div class="crash-status" id="crash-status">Ожидание ставок...</div>
+            <div class="multiplier" id="crash-multiplier">x1.00</div>
+            
+            <div class="input-row">
+                <input type="number" id="bet-amount" placeholder="Ставка (💎)" value="50">
+                <button class="btn" style="width: auto; margin:0;" id="btn-bet" onclick="placeBet()">Ставка</button>
+            </div>
+            
+            <button class="btn cashout" id="btn-cashout" onclick="cashOut()">ЗАБРАТЬ 🚀</button>
+        </div>
+        <div id="crash-players" style="font-size: 12px; color: #888; text-align: left;">Игроки: ...</div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
         let userId = tg.initDataUnsafe?.user?.id || 12345;
+        let currentBalance = 0;
 
+        // Загрузка баланса
         async function loadBalance() {
-            const res = await fetch(`/api/balance/${userId}`);
-            const data = await res.json();
-            document.getElementById('balance').innerText = data.balance;
+            try {
+                const res = await fetch(`/api/balance/${userId}`);
+                const data = await res.json();
+                currentBalance = data.balance;
+                document.getElementById('balance').innerText = currentBalance;
+            } catch (e) { console.error(e); }
         }
 
-        async function openCase(caseId) {
+        // Переключение вкладок
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ===== КЕЙСЫ =====
+        async function openCase(caseId, price) {
+            if (currentBalance < price) {
+                tg.showAlert("Недостаточно средств!");
+                return;
+            }
             document.getElementById('result').innerText = "Крутим... 🎰";
-            const res = await fetch('/api/open_case', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId, case_id: caseId })
-            });
-            const data = await res.json();
-            if (data.error) {
-                tg.showAlert(data.error);
-                document.getElementById('result').innerText = "Ошибка";
-            } else {
-                document.getElementById('result').innerHTML = `Выпало:<br><span style="font-size:30px">${data.item}</span>`;
-                loadBalance();
+            
+            try {
+                const res = await fetch('/api/open_case', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, case_id: caseId })
+                });
+                const data = await res.json();
+                
+                if (data.error) {
+                    tg.showAlert(data.error);
+                    document.getElementById('result').innerText = "Ошибка";
+                } else {
+                    document.getElementById('result').innerHTML = `Выпало:<br><span style="font-size:30px">${data.item}</span>`;
+                    loadBalance();
+                }
+            } catch (e) {
+                tg.showAlert("Ошибка сети");
             }
         }
 
+        // ===== ПОПОЛНЕНИЕ =====
         function buyCrystals() {
             tg.sendData(JSON.stringify({ action: "buy_crystals" }));
         }
+
+        // ===== РАКЕТКА (WebSocket) =====
+        let ws;
+        let currentMultiplier = 1.0;
+        let isBetPlaced = false;
+
+        function connectWS() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/${userId}`);
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'tick') {
+                    currentMultiplier = data.multiplier;
+                    document.getElementById('crash-multiplier').innerText = `x${currentMultiplier.toFixed(2)}`;
+                    document.getElementById('crash-multiplier').style.color = currentMultiplier > 2 ? '#ffeb3b' : '#00e676';
+                } 
+                else if (data.type === 'crash') {
+                    document.getElementById('crash-status').innerText = `УПАЛ НА x${data.multiplier.toFixed(2)} 💥`;
+                    document.getElementById('crash-multiplier').style.color = '#ff5252';
+                    document.getElementById('btn-cashout').style.display = 'none';
+                    document.getElementById('btn-bet').disabled = false;
+                    isBetPlaced = false;
+                }
+                else if (data.type === 'start') {
+                    document.getElementById('crash-status').innerText = "Ракета летит!";
+                    document.getElementById('crash-multiplier').style.color = '#00e676';
+                    document.getElementById('btn-cashout').style.display = 'block';
+                }
+            };
+
+            ws.onclose = () => setTimeout(connectWS, 3000);
+        }
+
+        function placeBet() {
+            if (isBetPlaced) return;
+            const amount = parseInt(document.getElementById('bet-amount').value);
+            
+            if (isNaN(amount) || amount <= 0) return tg.showAlert("Введи сумму");
+            if (currentBalance < amount) return tg.showAlert("Недостаточно средств!");
+
+            ws.send(JSON.stringify({ action: 'bet', amount: amount }));
+            document.getElementById('btn-bet').disabled = true;
+            isBetPlaced = true;
+            loadBalance(); // Обновляем баланс (сервер списал)
+        }
+
+        function cashOut() {
+            if (!isBetPlaced) return;
+            ws.send(JSON.stringify({ action: 'cashout' }));
+            document.getElementById('btn-cashout').style.display = 'none';
+            document.getElementById('btn-bet').disabled = false;
+            isBetPlaced = false;
+            tg.showAlert(`Ты забрал на x${currentMultiplier.toFixed(2)}!`);
+            setTimeout(loadBalance, 500);
+        }
+
+        // Инициализация
         loadBalance();
+        connectWS();
     </script>
 </body>
 </html>
