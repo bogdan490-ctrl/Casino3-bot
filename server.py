@@ -112,8 +112,6 @@ async def api_action(req: UserAction):
         if balance < price: return {"success": False, "msg": "Недостаточно средств"}
         
         update_balance(req.user_id, -price)
-        
-        # Шансы на выпадение (чем меньше вес, тем реже)
         choices = ["🗑 Мусор", "🥉 Бронза", "🥈 Серебро", "🥇 Золото", "💎 Алмаз", "👑 Корона", "💰 +10 💎", "💰 +50 💎", "💰 +100 💎"]
         weights = [40, 25, 15, 8, 5, 2, 3, 1.5, 0.5]
         item = random.choices(choices, weights=weights, k=1)[0]
@@ -133,28 +131,27 @@ async def api_action(req: UserAction):
         return {"success": True, "win": win, "new_balance": get_balance(req.user_id)}
 
     elif req.action == "buy":
-    stars = req.amount // 5
-    try:
-        await bot.send_invoice(
-            chat_id=req.user_id, 
-            title=f"Покупка {req.amount} 💎", 
-            description="Пополнение баланса", 
-            payload=f"buy_{req.amount}", 
-            currency="XTR", 
-            prices=[LabeledPrice(label="Кристаллы", amount=stars)]
-            # ВОТ ТУТ МЫ УБРАЛИ provider_token="" ВООБЩЕ
-        )
-        return {"success": True}
-    except Exception as e:
-        print(f"ОШИБКА ОПЛАТЫ: {e}")
-        return {"success": False, "msg": str(e)}
+        stars = req.amount // 5
+        try:
+            # Убрали provider_token, чтобы Telegram понял, что это Stars
+            await bot.send_invoice(
+                chat_id=req.user_id, 
+                title=f"{req.amount} Кристаллов", 
+                description="Покупка валюты", 
+                payload=f"buy_{req.amount}", 
+                currency="XTR", 
+                prices=[LabeledPrice(label="Кристаллы", amount=stars)]
+            )
+            return {"success": True}
+        except Exception as e:
+            print(f"ОШИБКА ОПЛАТЫ: {e}")
+            return {"success": False, "msg": str(e)}
         
     elif req.action == "top":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("SELECT uid, balance FROM users ORDER BY balance DESC LIMIT 10")
         top = c.fetchall(); conn.close()
-        res = [{"id": u, "bal": b} for u, b in top]
-        return {"success": True, "top": res}
+        return {"success": True, "top": [{"id": u, "bal": b} for u, b in top]}
 
 @dp.callback_query(F.data.startswith("appr_"))
 async def admin_approve(cb: CallbackQuery):
@@ -185,7 +182,7 @@ async def payment_ok(message: Message):
         update_balance(message.from_user.id, amount)
         await message.answer(f"✅ Оплата прошла! +{amount} Кристаллов.")
 
-# ===== РАКЕТКА (С ИСПРАВЛЕННЫМИ ШАНСАМИ И СКОРОСТЬЮ) =====
+# ===== РАКЕТКА =====
 active_bets, player_names = {}, {}
 crash_mult, crash_running = 1.0, False
 clients, game_state = set(), "waiting"
@@ -212,18 +209,15 @@ async def game_loop():
 
         while crash_running:
             await asyncio.sleep(0.1)
-            # СКОРОСТЬ: 0.015 (медленнее, чем было)
-            crash_mult += 0.015 * crash_mult 
+            crash_mult += 0.015 * crash_mult # Скорость
             
             if is_rigged:
                 if crash_mult >= 100.0: crash_running = False
             else:
                 if crash_mult > 10.0:
-                    # ШАНС КРАША НА ВЫСОКИХ ИКСАХ (15%)
-                    if random.random() < 0.15: crash_running = False
+                    if random.random() < 0.15: crash_running = False # Шанс на высоких
                 else:
-                    # ШАНС КРАША НА НИЗКИХ ИКСАХ
-                    if random.random() < 0.02 * crash_mult: crash_running = False
+                    if random.random() < 0.02 * crash_mult: crash_running = False # Шанс на низких
                     
             await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
             
@@ -240,7 +234,9 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
             if data.get("action") == "bet":
                 amt = data.get("amount", 0)
                 player_names[user_id] = data.get("name", "Игрок")
-                if game_state != "waiting": await websocket.send_json({"type": "error", "msg": "Закрыто"}); continue
+                if game_state != "waiting": 
+                    await websocket.send_json({"type": "error", "msg": "Ставки закрыты!"})
+                    continue
                 if get_balance(user_id) >= amt:
                     update_balance(user_id, -amt); active_bets[user_id] = amt
                     await broadcast({"type": "waiting", "countdown": "...", "players": active_bets, "names": player_names})
@@ -251,13 +247,11 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
                     update_balance(user_id, win); await websocket.send_json({"type": "cashed_out", "win": win})
     except WebSocketDisconnect: clients.remove(websocket)
 
-# ===== БОТ И АДМИНКА =====
+# ===== БОТ =====
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
-    
-    # РЕФЕРАЛКА
     if len(args) > 1 and args[1].startswith("ref"):
         referrer_id = args[1].replace("ref", "")
         if referrer_id != user_id:
@@ -317,17 +311,15 @@ async def cmd_broadcast(message: Message):
         except: pass
     await message.answer(f"✅ Отправлено {count} игрокам.")
 
-# ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ПРОМО
 @dp.message(Command("setpromo"))
 async def cmd_setpromo(message: Message):
     if message.from_user.id != ADMIN_ID: return
     try:
         parts = message.text.split()
         if len(parts) < 3:
-            await message.answer("❌ Формат: /setpromo КОД СУММА\nПример: /setpromo START 500")
+            await message.answer("❌ Формат: /setpromo КОД СУММА")
             return
-        code = parts[1].upper()
-        amount = int(parts[2])
+        code = parts[1].upper(); amount = int(parts[2])
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("INSERT OR REPLACE INTO promos (code, amount) VALUES (?, ?)", (code, amount))
         conn.commit(); conn.close()
