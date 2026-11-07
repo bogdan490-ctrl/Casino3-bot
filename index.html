@@ -158,6 +158,7 @@
             • <b>Рефералка:</b> +5 💎 за друга.<br>
             • <b>Бонус:</b> +10 💎 каждый день.<br><br>
             <i>Игра создана исключительно для развлечения. Не тратьте последние деньги!</i>
+            
             <i>Возникла проблема? - тебе в тех.поддержку</i>
         </div>
     </div>
@@ -228,13 +229,16 @@
 
         async function buyCrystals(amount) {
     try {
-        const res = await fetch('/api/action', { // <--- ИЗМЕНЕНО НА /api/action
+        const res = await fetch('/api/action', { 
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: String(userId), action: "buy", amount: amount })
         });
         const data = await res.json();
         if (data.success === false) {
             tg.showAlert("Ошибка: " + data.msg);
+        } else {
+            // ЗАКРЫВАЕМ ПРИЛОЖЕНИЕ, ЧТОБЫ ИГРОК УВИДЕЛ СЧЕТ В ЧАТЕ
+            tg.close(); 
         }
     } catch (e) {
         tg.showAlert("Сетевая ошибка");
