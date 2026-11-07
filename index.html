@@ -63,6 +63,53 @@
         
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+                 /* Красивые карточки для Инфо */
+.info-card {
+    background: #0d1112;
+    border: 1px solid #1f2926;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.info-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: #10b981;
+    margin-bottom: 12px;
+}
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #1f2926;
+    color: #e2e8f0;
+}
+.info-row:last-child {
+    border-bottom: none;
+}
+.info-val {
+    color: #10b981;
+    font-weight: bold;
+}
+.info-link {
+    display: flex;
+    justify-content: space-between;
+    text-decoration: none;
+    color: #e2e8f0;
+    font-size: 13px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1f2926;
+    transition: 0.2s;
+}
+.info-link:last-child {
+    border-bottom: none;
+}
+.info-link:active {
+    color: #10b981;
+    transform: translateX(5px);
+}
     </style>
 </head>
 <body>
@@ -149,20 +196,55 @@
         <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга (+5 💎)</button>
     </div>
 
-    <!-- ИНФО -->
-    <div id="tab-info" class="tab-content">
-        <div class="info-text">
-            <b>📜 Информация:</b><br><br>
-            • <b>Вывод:</b> от 1000 💎 (1000 💎 = 100 ⭐).<br>
-            • <b>Пополнение:</b> 50 💎 = 10 ⭐.<br>
-            • <b>Рефералка:</b> +5 💎 за друга.<br>
-            • <b>Бонус:</b> +10 💎 каждый день.<br><br>
-            <i>News - https://t.me/Lgendsstars<i><br>
-            <i>Игра создана исключительно для развлечения. Не тратьте последние деньги!</i><br><br>
-            <i>Возникла проблема? Тебе в - тех.поддержку.</i><br>
-            <i>Внимание! Бот в разработке. За найденные баги пологается компенсация!<i>
+<!-- ИНФО -->
+<div id="tab-info" class="tab-content">
+    <!-- Блок 1: Основная инфа -->
+    <div class="info-card">
+        <div class="info-title">📜 Правила и Информация</div>
+        <div class="info-row">
+            <span>💸 Вывод средств</span>
+            <span class="info-val">от 1000 💎 (100 ⭐)</span>
+        </div>
+        <div class="info-row">
+            <span>💳 Пополнение</span>
+            <span class="info-val">50 💎 = 10 ⭐</span>
+        </div>
+        <div class="info-row">
+            <span>🔗 Рефералка</span>
+            <span class="info-val">+5 💎 за друга</span>
+        </div>
+        <div class="info-row">
+            <span>🎁 Ежедневный бонус</span>
+            <span class="info-val">+10 💎</span>
         </div>
     </div>
+
+    <!-- Блок 2: Ссылки -->
+    <div class="info-card">
+        <div class="info-title">📢 Наши каналы</div>
+        <a href="https://t.me/Lgendsstars" target="_blank" class="info-link">
+            <span>📰 Новостной канал</span>
+            <span>➔</span>
+        </a>
+        <a href="https://t.me/Ваш_чат_поддержки" target="_blank" class="info-link"> <!-- Замени ссылку на свой чат -->
+            <span>🆘 Техподдержка</span>
+            <span>➔</span>
+        </a>
+    </div>
+
+    <!-- Блок 3: Предупреждения -->
+    <div class="info-card" style="border-color: #ef4444;">
+        <div class="info-title" style="color: #ef4444;">⚠️ Важно</div>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">
+            • Игра создана исключительно для развлечения. Не тратьте последние деньги!<br><br>
+            • <b>Бот в разработке.</b> За найденные баги полагается компенсация (пишите в техподдержку).
+        </p>
+    </div>
+
+    <div style="font-size: 11px; color: #475569; text-align: center; margin-top: 20px;">
+        Версия: 3.0.0 | 2026 © Legendstars
+    </div>
+</div>
 
     <script>
         const tg = window.Telegram.WebApp;
