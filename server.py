@@ -40,8 +40,8 @@ def get_balance(uid):
     c.execute("SELECT balance FROM users WHERE uid=?", (str(uid),))
     row = c.fetchone()
     if not row:
-        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 30))
-        conn.commit(); balance = 30
+        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 1))
+        conn.commit(); balance = 1
     else: balance = row[0]
     conn.close(); return balance
 
