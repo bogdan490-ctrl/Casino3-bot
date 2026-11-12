@@ -6,125 +6,72 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <title>Legendstars</title>
     <style>
+        /* ... (твои старые стили: шрифты, фон, кнопки, табы) ... */
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap');
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: #090a0b; color: #e2e8f0; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .balance-box { background: #121618; padding: 8px 15px; border-radius: 12px; font-weight: 900; font-size: 16px; border: 1px solid #1f2926; color: #10b981; display: flex; align-items: center; gap: 5px; }
-        
-        /* НАВИГАЦИЯ (С ПРОКРУТКОЙ) */
-        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-        .tabs::-webkit-scrollbar { display: none; }
-        .tab-btn { flex: 0 0 auto; background: transparent; border: none; color: #64748b; padding: 10px 15px; border-radius: 10px; font-weight: 700; font-size: 13px; transition: 0.3s; margin-right: 5px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .balance-box { background: linear-gradient(135deg, #064e3b, #10b981); padding: 10px 20px; border-radius: 15px; font-weight: 900; font-size: 18px; color: #fff; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; overflow-x: auto; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #64748b; padding: 10px 5px; border-radius: 10px; font-weight: 700; font-size: 12px; transition: 0.3s; white-space: nowrap; }
         .tab-btn.active { background: #064e3b; color: #34d399; box-shadow: inset 0 0 10px rgba(52, 211, 153, 0.2); }
-        
         .tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
         .tab-content.active { display: flex; }
-        
-        /* Ракетка */
-        .crash-area { flex: 1; background: #0d1112; border-radius: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #1f2926; margin-bottom: 10px; min-height: 160px; }
-        .multiplier { font-size: 50px; font-weight: 900; color: #10b981; z-index: 11; font-family: monospace; text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
-        .multiplier.crashed { color: #ef4444; animation: shake 0.5s; }
-        .status-text { font-size: 12px; color: #64748b; font-weight: 700; margin-top: 5px; z-index: 11; text-transform: uppercase; }
-        .rocket { font-size: 40px; position: absolute; bottom: -50px; left: 0; transition: bottom 0.1s linear, left 0.1s linear; z-index: 10; transform: rotate(-45deg); filter: drop-shadow(0 0 10px #10b981); }
-        
-        .history-bar { display: flex; gap: 5px; overflow-x: auto; margin-top: 10px; padding-bottom: 5px; }
-        .history-item { background: #121618; color: #10b981; border: 1px solid #1f2926; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 900; white-space: nowrap; }
-        .history-item.crash { color: #ef4444; }
-        
-        .live-bets { background: #121618; border-radius: 12px; padding: 10px; margin-bottom: 10px; max-height: 80px; overflow-y: auto; border: 1px solid #1f2926; font-size: 12px;}
-        .live-bet-item { display: flex; justify-content: space-between; border-bottom: 1px solid #1f2926; padding: 4px 0; color: #94a3b8;}
-        .live-bet-item span:last-child { color: #10b981; font-weight: bold;}
-        
-        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
-        .input-bet { flex: 1; background: #0d1112; border: 1px solid #1f2926; color: #fff; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; text-align: center; outline: none; }
-        .btn { background: #064e3b; color: #34d399; border: 1px solid #10b981; padding: 15px; border-radius: 15px; font-size: 14px; font-weight: 900; width: 100%; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
-        .btn:active { transform: scale(0.98); background: #047857; }
-        .btn:disabled { background: #121618; border-color: #1f2926; color: #475569; }
-        .btn.cashout { background: #10b981; color: #000; display: none; animation: pulse 1s infinite; border: none; }
-        .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 5px; }
-        
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .action-card { background: #121618; border: 1px solid #1f2926; padding: 15px; border-radius: 15px; text-align: center; cursor: pointer; color: #10b981; font-weight: bold; }
-        .action-card:active { transform: scale(0.95); }
-        
-        /* CS:GO Рулетка */
-        .csgo-case { background: #0d1112; border: 1px solid #1f2926; border-radius: 15px; padding: 10px; overflow: hidden; position: relative; height: 100px; display: flex; align-items: center; margin-bottom: 15px; }
-        .csgo-strip { display: flex; transition: transform 3.5s cubic-bezier(0.1, 0.7, 0.1, 1); }
-        .csgo-item { min-width: 90px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; border-right: 1px solid #1f2926; color: #10b981; text-align: center;}
-        .csgo-center-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #10b981; transform: translateX(-50%); z-index: 5; box-shadow: 0 0 10px #10b981; }
-        
-        /* Ежедневка */
-        .daily-box { text-align: center; padding: 30px; background: #0d1112; border-radius: 20px; border: 1px solid #1f2926; margin-bottom: 15px;}
-        
-        .info-text { font-size: 13px; color: #94a3b8; line-height: 1.5; text-align: left; background: #0d1112; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1f2926; }
-        .promo-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #1f2926; background: #090a0b; color: #10b981; margin-bottom: 10px; text-align: center; font-weight: 900; text-transform: uppercase; }
-        
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(1); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-                 /* Красивые карточки для Инфо */
-.info-card {
-    background: #0d1112;
-    border: 1px solid #1f2926;
-    border-radius: 15px;
-    padding: 15px;
-    margin-bottom: 15px;
-}
-.info-title {
-    font-size: 15px;
-    font-weight: 900;
-    color: #10b981;
-    margin-bottom: 12px;
-}
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    padding: 8px 0;
-    border-bottom: 1px dashed #1f2926;
-    color: #e2e8f0;
-}
-.info-row:last-child {
-    border-bottom: none;
-}
-.info-val {
-    color: #10b981;
-    font-weight: bold;
-}
-.info-link {
-    display: flex;
-    justify-content: space-between;
-    text-decoration: none;
-    color: #e2e8f0;
-    font-size: 13px;
-    padding: 12px 0;
-    border-bottom: 1px solid #1f2926;
-    transition: 0.2s;
-}
-.info-link:last-child {
-    border-bottom: none;
-}
-.info-link:active {
-    color: #10b981;
-    transform: translateX(5px);
-}
+        /* Стили для кейсов */
+        .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .case-card { background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; padding: 20px; border-radius: 20px; text-align: center; cursor: pointer; position: relative; overflow: hidden; }
+        .case-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 60%); animation: rotate 5s linear infinite; }
+        .case-icon { font-size: 40px; margin-bottom: 10px; position: relative; z-index: 2; }
+        .case-name { font-size: 14px; font-weight: 900; color: #fff; position: relative; z-index: 2; }
+        .case-price { font-size: 12px; color: #10b981; font-weight: 700; margin-top: 5px; position: relative; z-index: 2; }
+        
+        /* Стили для инвентаря */
+        .inv-grid { display: flex; flex-direction: column; gap: 10px; }
+        .inv-item { background: #0d1112; border: 1px solid #1f2926; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .inv-info { display: flex; flex-direction: column; }
+        .inv-name { font-size: 16px; font-weight: 900; }
+        .inv-price { font-size: 13px; color: #10b981; font-weight: 700; margin-top: 3px; }
+        .btn-sell { background: #f59e0b; color: #000; border: none; padding: 10px 15px; border-radius: 10px; font-weight: 900; cursor: pointer; }
+        
+        /* ... (остальные стили: ракетка, профиль, кнопки) ... */
+        .crash-area { flex: 1; background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #1f2926; margin-bottom: 10px; min-height: 180px; }
+        .multiplier { font-size: 54px; font-weight: 900; color: #10b981; z-index: 11; font-family: monospace; text-shadow: 0 0 40px rgba(16, 185, 129, 0.6); }
+        .multiplier.crashed { color: #ef4444; animation: shake 0.5s; text-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
+        .status-text { font-size: 12px; color: #64748b; font-weight: 700; margin-top: 5px; z-index: 11; text-transform: uppercase; letter-spacing: 1px; }
+        .rocket { font-size: 40px; position: absolute; bottom: -50px; left: 0; transition: bottom 0.1s linear, left 0.1s linear; z-index: 10; transform: rotate(-45deg); filter: drop-shadow(0 0 15px #10b981); }
+        .history-bar { display: flex; gap: 5px; overflow-x: auto; margin-top: 10px; padding-bottom: 5px; }
+        .history-item { background: #121618; color: #10b981; border: 1px solid #1f2926; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 900; white-space: nowrap; }
+        .history-item.crash { color: #ef4444; }
+        .live-bets { background: #121618; border-radius: 12px; padding: 10px; margin-bottom: 10px; max-height: 80px; overflow-y: auto; border: 1px solid #1f2926; font-size: 13px;}
+        .live-bet-item { display: flex; justify-content: space-between; border-bottom: 1px solid #1f2926; padding: 6px 0; color: #94a3b8;}
+        .live-bet-item span:last-child { color: #10b981; font-weight: 900;}
+        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
+        .input-bet { flex: 1; background: #0d1112; border: 1px solid #1f2926; color: #fff; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: 700; text-align: center; outline: none; }
+        .btn { background: linear-gradient(135deg, #047857, #10b981); color: #fff; border: none; padding: 15px; border-radius: 15px; font-size: 15px; font-weight: 900; width: 100%; cursor: pointer; transition: 0.2s; text-transform: uppercase; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: #121618; color: #475569; box-shadow: none; }
+        .btn.cashout { background: linear-gradient(135deg, #f59e0b, #eab308); color: #000; display: none; animation: pulse 1s infinite; border: none; }
+        .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 10px; box-shadow: none; }
+        .info-text { font-size: 14px; color: #94a3b8; line-height: 1.6; text-align: left; background: #0d1112; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; }
+        .promo-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #1f2926; background: #090a0b; color: #10b981; margin-bottom: 15px; text-align: center; font-weight: 900; font-size: 16px; text-transform: uppercase; outline: none; }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="balance-box">💎 <span id="balance">0</span></div>
+        <div class="balance-box">💎 <span id="balance">0.00</span></div>
     </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('crash', event)">🚀 Ракетка</button>
         <button class="tab-btn" onclick="switchTab('cases', event)">📦 Кейсы</button>
-        <button class="tab-btn" onclick="switchTab('daily', event)">🎁 Бонус</button>
+        <button class="tab-btn" onclick="switchTab('inv', event)">🎒 Инвентарь</button>
         <button class="tab-btn" onclick="switchTab('buy', event)">💳 Пополнить</button>
         <button class="tab-btn" onclick="switchTab('profile', event)">👤 Профиль</button>
-        <button class="tab-btn" onclick="switchTab('info', event)">ℹ️ Инфо</button>
     </div>
 
     <!-- РАКЕТКА -->
@@ -137,7 +84,7 @@
         <div class="history-bar" id="history-bar"></div>
         <div class="live-bets" id="live-bets"></div>
         <div class="controls">
-            <input type="number" id="bet-amount" class="input-bet" placeholder="Сумма" value="50">
+            <input type="number" id="bet-amount" class="input-bet" placeholder="Ставка" value="0.10" step="0.01">
             <button class="btn" id="btn-bet" onclick="placeBet()" style="width: 40%; margin:0;">В ИГРУ</button>
         </div>
         <button class="btn cashout" id="btn-cashout" onclick="cashOut()">ЗАБРАТЬ</button>
@@ -145,36 +92,43 @@
 
     <!-- КЕЙСЫ -->
     <div id="tab-cases" class="tab-content">
-        <div class="csgo-case">
-            <div class="csgo-center-line"></div>
-            <div class="csgo-strip" id="csgo-strip"></div>
-        </div>
-        <div class="grid-2">
-            <div class="action-card" onclick="openCase('bronze', 50)">🥉 Бронза<br><span style="font-size:10px; color:#64748b;">50 💎</span></div>
-            <div class="action-card" onclick="openCase('silver', 150)">🥈 Серебро<br><span style="font-size:10px; color:#64748b;">150 💎</span></div>
-            <div class="action-card" onclick="openCase('gold', 500)">🥇 Золото<br><span style="font-size:10px; color:#64748b;">500 💎</span></div>
-            <div class="action-card" onclick="spinWheel()">🎡 Рулетка<br><span style="font-size:10px; color:#64748b;">50 💎</span></div>
+        <div class="cases-grid">
+            <div class="case-card" onclick="openCase('bronze')">
+                <div class="case-icon">🥉</div>
+                <div class="case-name">Бронза</div>
+                <div class="case-price">2.00 💎</div>
+            </div>
+            <div class="case-card" onclick="openCase('silver')">
+                <div class="case-icon">🥈</div>
+                <div class="case-name">Серебро</div>
+                <div class="case-price">5.00 💎</div>
+            </div>
+            <div class="case-card" onclick="openCase('gold')">
+                <div class="case-icon">🥇</div>
+                <div class="case-name">Золото</div>
+                <div class="case-price">10.00 💎</div>
+            </div>
+            <div class="case-card" onclick="openCase('diamond')">
+                <div class="case-icon">💎</div>
+                <div class="case-name">Алмаз</div>
+                <div class="case-price">20.00 💎</div>
+            </div>
         </div>
     </div>
 
-    <!-- ЕЖЕДНЕВКА -->
-    <div id="tab-daily" class="tab-content">
-        <div class="daily-box">
-            <div style="font-size: 50px; margin-bottom: 10px;">🎁</div>
-            <h3 style="color: #10b981; margin-bottom: 10px;">Ежедневный Бонус</h3>
-            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Заходи каждый день и получай 10 алмазов бесплатно!</p>
-            <button class="btn" onclick="getBonus()">ЗАБРАТЬ 10 💎</button>
+    <!-- ИНВЕНТАРЬ -->
+    <div id="tab-inv" class="tab-content">
+        <div class="inv-grid" id="inventory-list">
+            <div style="text-align:center; color:#64748b; margin-top:20px;">Твой инвентарь пуст</div>
         </div>
     </div>
 
     <!-- ПОПОЛНЕНИЕ -->
     <div id="tab-buy" class="tab-content">
-        <div class="info-text" style="text-align:center; margin-bottom: 20px;">
-            <b>Курс:</b> 10 ⭐ = 50 💎
-        </div>
-        <div class="action-card" style="padding: 20px; margin-bottom: 10px;" onclick="buyCrystals(50)">50 💎 <br><span style="font-size:12px; color:#64748b;">10 ⭐</span></div>
-        <div class="action-card" style="padding: 20px; margin-bottom: 10px;" onclick="buyCrystals(250)">250 💎 <br><span style="font-size:12px; color:#64748b;">50 ⭐</span></div>
-        <div class="action-card" style="padding: 20px; margin-bottom: 10px;" onclick="buyCrystals(500)">500 💎 <br><span style="font-size:12px; color:#64748b;">100 ⭐</span></div>
+        <div style="text-align:center; margin-bottom: 20px; font-weight:bold; color:#10b981;">Курс: 10 ⭐ = 0.10 💎</div>
+        <div class="case-card" style="margin-bottom:10px;" onclick="buyCrystals(0.10)">0.10 💎 <br><span style="font-size:12px; color:#64748b;">10 ⭐</span></div>
+        <div class="case-card" style="margin-bottom:10px;" onclick="buyCrystals(0.50)">0.50 💎 <br><span style="font-size:12px; color:#64748b;">50 ⭐</span></div>
+        <div class="case-card" style="margin-bottom:10px;" onclick="buyCrystals(1.00)">1.00 💎 <br><span style="font-size:12px; color:#64748b;">100 ⭐</span></div>
     </div>
 
     <!-- ПРОФИЛЬ -->
@@ -182,69 +136,14 @@
         <div class="info-text">
             <b>👤 Профиль</b><br><br>
             ID: <span id="prof-id">...</span><br>
-            Баланс: <span id="prof-bal" style="color: #10b981; font-weight: 900;">0</span> 💎
+            Баланс: <span id="prof-bal" style="color: #10b981; font-weight: 900;">0.00</span> 💎
         </div>
-        
-        <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="showTop()">🏆 Топ игроков</button>
-        
+        <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 10)" step="0.1">
+        <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="requestWithdraw()">💸 Вывести</button>
         <input type="text" id="promo-code" class="promo-input" placeholder="ПРОМОКОД">
         <button class="btn" style="margin-bottom: 15px;" onclick="activatePromo()">АКТИВИРОВАТЬ</button>
-        
-        <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 1000)">
-        <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="requestWithdraw()">💸 Вывести</button>
-        
-        <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга (+5 💎)</button>
+        <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга</button>
     </div>
-
-<!-- ИНФО -->
-<div id="tab-info" class="tab-content">
-    <!-- Блок 1: Основная инфа -->
-    <div class="info-card">
-        <div class="info-title">📜 Правила и Информация</div>
-        <div class="info-row">
-            <span>💸 Вывод средств</span>
-            <span class="info-val">от 1000 💎 (100 ⭐)</span>
-        </div>
-        <div class="info-row">
-            <span>💳 Пополнение</span>
-            <span class="info-val">50 💎 = 10 ⭐</span>
-        </div>
-        <div class="info-row">
-            <span>🔗 Рефералка</span>
-            <span class="info-val">+5 💎 за друга</span>
-        </div>
-        <div class="info-row">
-            <span>🎁 Ежедневный бонус</span>
-            <span class="info-val">+10 💎</span>
-        </div>
-    </div>
-
-    <!-- Блок 2: Ссылки -->
-    <div class="info-card">
-        <div class="info-title">📢 Наши каналы</div>
-        <a href="https://t.me/Lgendsstars" target="_blank" class="info-link">
-            <span>📰 Новостной канал</span>
-            <span>➔</span>
-        </a>
-        <a href="https://t.me/Ваш_чат_поддержки" target="_blank" class="info-link"> <!-- Замени ссылку на свой чат -->
-            <span>🆘 Техподдержка</span>
-            <span>➔</span>
-        </a>
-    </div>
-
-    <!-- Блок 3: Предупреждения -->
-    <div class="info-card" style="border-color: #ef4444;">
-        <div class="info-title" style="color: #ef4444;">⚠️ Важно</div>
-        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">
-            • Игра создана исключительно для развлечения. Не тратьте последние деньги!<br><br>
-            • <b>Бот в разработке.</b> За найденные баги полагается компенсация (пишите в техподдержку).
-        </p>
-    </div>
-
-    <div style="font-size: 11px; color: #475569; text-align: center; margin-top: 20px;">
-        Версия: 3.0.0 | 2026 © Legendstars
-    </div>
-</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -260,8 +159,8 @@
             const res = await fetch(`/api/balance/${userId}`);
             const data = await res.json();
             currentBalance = data.balance;
-            document.getElementById('balance').innerText = currentBalance;
-            document.getElementById('prof-bal').innerText = currentBalance;
+            document.getElementById('balance').innerText = currentBalance.toFixed(2);
+            document.getElementById('prof-bal').innerText = currentBalance.toFixed(2);
         }
 
         function switchTab(tab, event) {
@@ -269,6 +168,7 @@
             document.querySelectorAll('.tabs .tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
             if(event) event.target.classList.add('active');
+            if(tab === 'inv') loadInventory();
         }
 
         async function apiAction(action, data = {}) {
@@ -279,104 +179,55 @@
             return await res.json();
         }
 
-        async function getBonus() {
-            const res = await apiAction("bonus");
-            tg.showAlert(res.msg);
-            if (res.success) loadBalance();
-        }
-
-        async function activatePromo() {
-            const code = document.getElementById('promo-code').value.trim();
-            if (!code) return;
-            const res = await apiAction("promo", { code: code });
-            tg.showAlert(res.msg);
-            if (res.success) loadBalance();
-        }
-
-        async function showTop() {
-            const res = await apiAction("top");
-            if (res.success) {
-                let text = "<b>🏆 Топ-10 игроков:</b>\n\n";
-                res.top.forEach((u, i) => text += `${i+1}. ID: ${u.id} — ${u.bal} 💎\n`);
-                tg.showAlert(text);
-            }
-        }
-
+        async function activatePromo() { const code = document.getElementById('promo-code').value.trim(); if (!code) return; const res = await apiAction("promo", { code: code }); tg.showAlert(res.msg); if (res.success) loadBalance(); }
         async function requestWithdraw() {
-            const amount = parseInt(document.getElementById('withdraw-amount').value);
-            if (!amount || amount < 1000) return tg.showAlert("Минимум 1000 💎");
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            if (!amount || amount < 10) return tg.showAlert("Минимум 10 💎");
             const res = await apiAction("withdraw", { amount: amount });
             tg.showAlert(res.msg);
             if (res.success) { loadBalance(); document.getElementById('withdraw-amount').value = ''; }
         }
-
-        async function buyCrystals(amount) {
-    try {
-        const res = await fetch('/api/action', { 
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: String(userId), action: "buy", amount: amount })
-        });
-        const data = await res.json();
-        if (data.success === false) {
-            tg.showAlert("Ошибка: " + data.msg);
-        } else {
-            // ЗАКРЫВАЕМ ПРИЛОЖЕНИЕ, ЧТОБЫ ИГРОК УВИДЕЛ СЧЕТ В ЧАТЕ
-            tg.close(); 
+        function buyCrystals(amount) {
+            fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: String(userId), action: "buy", amount: amount }) });
         }
-    } catch (e) {
-        tg.showAlert("Сетевая ошибка");
-    }
-        }
+        function getRefLink() { const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbot?start=ref${userId}&text=Залетай!`; tg.openTelegramLink(link); }
 
-        function getRefLink() {
-    const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbot?start=ref${userId}&text=Залетай в Legendstars!`;
-    tg.openTelegramLink(link);
-        }
-
-        // ===== CS:GO КЕЙСЫ =====
-        async function openCase(caseId, price) {
-            if (currentBalance < price) return tg.showAlert("Мало денег!");
+        async function openCase(caseId) {
             const res = await apiAction("open_case", { case_id: caseId });
             if (!res.success) return tg.showAlert(res.msg);
-            
-            const strip = document.getElementById('csgo-strip');
-            strip.innerHTML = '';
-            const icons = ['🗑', '🥉', '🥈', '🥇', '💎', '👑', '10', '50', '100'];
-            
-            let winIndex = 30;
-            for (let i = 0; i < 40; i++) {
+            tg.showAlert(`🎉 Выпало: ${res.item} (Стоимость: ${res.price} 💎)`);
+            loadBalance();
+        }
+
+        async function loadInventory() {
+            const res = await apiAction("get_inv");
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '';
+            if (!res.success || res.inv.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#64748b; margin-top:20px;">Твой инвентарь пуст</div>';
+                return;
+            }
+            res.inv.forEach((item) => {
                 const el = document.createElement('div');
-                el.className = 'csgo-item';
-                el.innerText = (i === winIndex) ? res.item.replace("💰 ", "") : icons[Math.floor(Math.random() * icons.length)];
-                strip.appendChild(el);
-            }
-            
-            strip.style.transition = 'none';
-            strip.style.transform = 'translateX(0)';
-            
-            setTimeout(() => {
-                strip.style.transition = 'transform 3.5s cubic-bezier(0.1, 0.7, 0.1, 1)';
-                let offset = (winIndex * 90) - (window.innerWidth / 2) + 45; 
-                strip.style.transform = `translateX(-${offset}px)`;
-            }, 50);
-            
-            setTimeout(() => { 
-                tg.showAlert(`🎉 Выпало: ${res.item}`);
-                loadBalance(); 
-            }, 3600);
+                el.className = 'inv-item';
+                el.innerHTML = `
+                    <div class="inv-info">
+                        <div class="inv-name">${item.name}</div>
+                        <div class="inv-price">Цена: ${item.price} 💎 (Продажа: ${(item.price * 0.8).toFixed(2)} 💎)</div>
+                    </div>
+                    <button class="btn-sell" onclick="sellItem(${item.id})">Продать</button>
+                `;
+                list.appendChild(el);
+            });
         }
 
-        async function spinWheel() {
-            const res = await apiAction("spin");
-            if (res.success) {
-                tg.showAlert(`🎡 Выпало: ${res.win} 💎!`);
-                loadBalance();
-            } else {
-                tg.showAlert(res.msg);
-            }
+        async function sellItem(itemId) {
+            const res = await apiAction("sell_item", { item_id: itemId });
+            tg.showAlert(res.msg);
+            if (res.success) { loadBalance(); loadInventory(); }
         }
 
-        // ===== РАКЕТКА =====
+        // РАКЕТКА (осталась без изменений)
         let isBetPlaced = false, gameState = "waiting", currentMult = 1.0;
 
         function connectWS() {
@@ -448,7 +299,7 @@
 
         function placeBet() {
             if (isBetPlaced || gameState !== "waiting") return;
-            const amount = parseInt(document.getElementById('bet-amount').value);
+            const amount = parseFloat(document.getElementById('bet-amount').value);
             if (isNaN(amount) || amount <= 0) return tg.showAlert("Введи сумму");
             if (currentBalance < amount) return tg.showAlert("Мало денег!");
             ws.send(JSON.stringify({ action: 'bet', amount: amount, name: userName }));
@@ -464,4 +315,4 @@
         loadBalance(); connectWS();
     </script>
 </body>
-</html>
+    </html>
