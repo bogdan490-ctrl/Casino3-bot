@@ -40,7 +40,7 @@
         .input-bet { flex: 1; background: #0d1112; border: 1px solid #1f2926; color: #fff; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: 700; text-align: center; outline: none; }
         .btn { background: linear-gradient(135deg, #047857, #10b981); color: #fff; border: none; padding: 15px; border-radius: 15px; font-size: 15px; font-weight: 900; width: 100%; cursor: pointer; transition: 0.2s; text-transform: uppercase; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
         .btn:active { transform: scale(0.98); }
-        .btn:disabled { background: #121618; color: #475569; box-shadow: none; }
+        .btn:disabled { background: #121618; color: #475569; box-shadow: none; cursor: not-allowed; }
         .btn.cashout { background: linear-gradient(135deg, #f59e0b, #eab308); color: #000; display: none; animation: pulse 1s infinite; border: none; }
         .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 10px; box-shadow: none; }
         
@@ -152,7 +152,7 @@
             <div style="font-size: 50px; margin-bottom: 10px;">🎁</div>
             <h3 style="color: #10b981; margin-bottom: 10px;">Ежедневный Кейс</h3>
             <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Заходи каждый день и получай подарок бесплатно!</p>
-            <button class="btn" onclick="openDaily()">ОТКРЫТЬ</button>
+            <button class="btn" id="btn-daily" onclick="openDaily()">ОТКРЫТЬ</button>
         </div>
     </div>
 
@@ -192,21 +192,41 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
-        let userId = tg.initDataUnsafe?.user?.id || 12345;
-        let userName = tg.initDataUnsafe?.user?.first_name || "Игрок";
+        // Безопасная инициализация Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready(); 
+            tg.expand();
+        }
+        
+        // Заглушки для тестирования вне Telegram
+        let userId = tg?.initDataUnsafe?.user?.id || 12345;
+        let userName = tg?.initDataUnsafe?.user?.first_name || "Игрок";
+        
         let currentBalance = 0;
         let ws;
         
         document.getElementById('prof-id').innerText = userId;
 
+        // Безопасный алерт (работает и в ТГ и в браузере)
+        function showAlert(msg) {
+            if (tg && tg.showAlert) {
+                tg.showAlert(msg);
+            } else {
+                alert(msg);
+            }
+        }
+
         async function loadBalance() {
-            const res = await fetch(`/api/balance/${userId}`);
-            const data = await res.json();
-            currentBalance = data.balance;
-            document.getElementById('balance').innerText = currentBalance.toFixed(2);
-            document.getElementById('prof-bal').innerText = currentBalance.toFixed(2);
+            try {
+                const res = await fetch(`/api/balance/${userId}`);
+                const data = await res.json();
+                currentBalance = data.balance || 0;
+                document.getElementById('balance').innerText = currentBalance.toFixed(2);
+                document.getElementById('prof-bal').innerText = currentBalance.toFixed(2);
+            } catch (e) {
+                console.error("Ошибка загрузки баланса:", e);
+            }
         }
 
         function switchTab(tab, event) {
@@ -218,36 +238,65 @@
         }
 
         async function apiAction(action, data = {}) {
-            const res = await fetch('/api/action', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: String(userId), action: action, ...data })
-            });
-            return await res.json();
+            try {
+                const res = await fetch('/api/action', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: String(userId), action: action, ...data })
+                });
+                return await res.json();
+            } catch (e) {
+                console.error("Ошибка API:", e);
+                return { success: false, msg: "Ошибка соединения с сервером" };
+            }
         }
 
         async function openDaily() {
+            const btn = document.getElementById('btn-daily');
+            btn.disabled = true; // Защита от спама
             const res = await apiAction("daily_case");
-            tg.showAlert(res.msg);
+            showAlert(res.msg);
             if (res.success) loadBalance();
+            btn.disabled = false;
         }
 
-        async function activatePromo() { const code = document.getElementById('promo-code').value.trim(); if (!code) return; const res = await apiAction("promo", { code: code }); tg.showAlert(res.msg); if (res.success) loadBalance(); }
+        async function activatePromo() { 
+            const code = document.getElementById('promo-code').value.trim(); 
+            if (!code) return; 
+            const res = await apiAction("promo", { code: code }); 
+            showAlert(res.msg); 
+            if (res.success) loadBalance(); 
+        }
+
         async function requestWithdraw() {
             const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            if (!amount || amount < 10) return tg.showAlert("Минимум 10 💎");
+            if (!amount || amount < 10) return showAlert("Минимум 10 💎");
             const res = await apiAction("withdraw", { amount: amount });
-            tg.showAlert(res.msg);
+            showAlert(res.msg);
             if (res.success) { loadBalance(); document.getElementById('withdraw-amount').value = ''; }
         }
+
         function buyCrystals(amount) {
             fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: String(userId), action: "buy", amount: amount }) });
-            tg.close();
+            if (tg) tg.close();
         }
-        function getRefLink() { const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbot?start=ref${userId}&text=Залетай!`; tg.openTelegramLink(link); }
+
+        function getRefLink() { 
+            const link = `https://t.me/share/url?url=https://t.me/Legendsstartsbot?start=ref${userId}&text=Залетай!`; 
+            if (tg) tg.openTelegramLink(link);
+            else window.open(link, '_blank');
+        }
 
         async function openCase(caseId) {
+            // Блокируем все кейсы от двойного клика
+            const caseCards = document.querySelectorAll('.case-card');
+            caseCards.forEach(c => c.style.pointerEvents = 'none');
+
             const res = await apiAction("open_case", { case_id: caseId });
-            if (!res.success) return tg.showAlert(res.msg);
+            if (!res.success) {
+                showAlert(res.msg);
+                caseCards.forEach(c => c.style.pointerEvents = 'auto');
+                return;
+            }
             
             const strip = document.getElementById('roulette-strip');
             strip.innerHTML = '';
@@ -259,13 +308,25 @@
                 el.innerText = (i === winIndex) ? res.item.split(' ')[0] : icons[Math.floor(Math.random() * icons.length)];
                 strip.appendChild(el);
             }
-            strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
+            
+            // Сброс анимации
+            strip.style.transition = 'none'; 
+            strip.style.transform = 'translateX(0)';
+            
+            // Принудительный reflow для применения стилей
+            void strip.offsetWidth; 
+
             setTimeout(() => {
                 strip.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
                 let offset = (winIndex * 80) - (window.innerWidth / 2) + 40; 
                 strip.style.transform = `translateX(-${offset}px)`;
             }, 50);
-            setTimeout(() => { tg.showAlert(`🎉 Выпало: ${res.item} (${res.price} 💎)`); loadBalance(); }, 4000);
+
+            setTimeout(() => { 
+                showAlert(`🎉 Выпало: ${res.item} (${res.price} 💎)`); 
+                loadBalance(); 
+                caseCards.forEach(c => c.style.pointerEvents = 'auto'); // Разблокируем
+            }, 4000);
         }
 
         async function loadInventory() {
@@ -292,19 +353,23 @@
 
         async function sellItem(itemId) {
             const res = await apiAction("sell_item", { item_id: itemId });
-            tg.showAlert(res.msg);
+            showAlert(res.msg);
             if (res.success) { loadBalance(); loadInventory(); }
         }
 
         async function sellAll() {
             const res = await apiAction("sell_all");
-            tg.showAlert(res.msg);
+            showAlert(res.msg);
             if (res.success) { loadBalance(); loadInventory(); }
         }
 
         async function showTop() {
             const res = await apiAction("top");
-            if (res.success) { let text = "<b>🏆 Топ-10:</b>\n\n"; res.top.forEach((u, i) => text += `${i+1}. ID: ${u.id} — ${u.bal} 💎\n`); tg.showAlert(text); }
+            if (res.success) { 
+                let text = "🏆 Топ-10:\n\n"; 
+                res.top.forEach((u, i) => text += `${i+1}. ID: ${u.id} — ${u.bal} 💎\n`); 
+                showAlert(text); 
+            }
         }
 
         // РАКЕТКА
@@ -365,7 +430,7 @@
                     histBar.prepend(newItem); if (histBar.children.length > 15) histBar.lastChild.remove();
                 }
                 else if (data.type === 'cashed_out') {
-                    tg.showAlert(`Вывел ${data.win} 💎 на x${currentMult.toFixed(2)}!`);
+                    showAlert(`Вывел ${data.win} 💎 на x${currentMult.toFixed(2)}!`);
                     loadBalance(); btnCashout.style.display = 'none'; btnBet.disabled = true;
                     
                     const histBar = document.getElementById('history-bar');
@@ -380,8 +445,8 @@
         function placeBet() {
             if (isBetPlaced || gameState !== "waiting") return;
             const amount = parseFloat(document.getElementById('bet-amount').value);
-            if (isNaN(amount) || amount <= 0) return tg.showAlert("Введи сумму");
-            if (currentBalance < amount) return tg.showAlert("Мало денег!");
+            if (isNaN(amount) || amount <= 0) return showAlert("Введи сумму");
+            if (currentBalance < amount) return showAlert("Мало денег!");
             ws.send(JSON.stringify({ action: 'bet', amount: amount, name: userName }));
             document.getElementById('btn-bet').disabled = true;
             isBetPlaced = true; loadBalance();
