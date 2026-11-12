@@ -374,4 +374,4 @@ async def startup():
     asyncio.create_task(game_loop()); asyncio.create_task(dp.start_polling(bot))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000))).
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
