@@ -18,7 +18,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 import uvicorn
 
 # ===== НАСТРОЙКИ =====
-BOT_TOKEN = "9280034478:AAHgmjytU79yLOsnh7HnksSOrlzBZ2rXNgA"
+# Токен теперь берется из переменных окружения Render (Environment Variables)
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "ТВОЙ_ТОКЕН_СЮДА_ЕСЛИ_ТЕСТИРУЕШЬ_ЛОКАЛЬНО")
 ADMIN_ID = 8491030557
 WEB_APP_URL = "https://casino-bot-ojim.onrender.com"
 
@@ -126,7 +127,6 @@ async def api_action(req: UserAction):
         
         update_balance(req.user_id, -price)
         
-        # Сбалансированные шансы
         choices = [
             {"name": "🧸 Мишка", "price": 1.0, "weight": 55},
             {"name": "🌹 Роза", "price": 3.0, "weight": 25},
@@ -192,7 +192,8 @@ async def api_action(req: UserAction):
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("SELECT uid, balance FROM users ORDER BY balance DESC LIMIT 10")
         top = c.fetchall(); conn.close()
-        return {"success": True, "top": [{"id": u, "bal": b} for u, b in top]}
+        # ИСПРАВЛЕНИЕ: Округляем баланс до 2 знаков, чтобы убрать хвосты (13.269999...)
+        return {"success": True, "top": [{"id": u, "bal": round(b, 2)} for u, b in top]}
 
 @app.get("/api/balance/{user_id}")
 def api_balance(user_id: str): return {"balance": get_user(user_id)["balance"]}
@@ -208,7 +209,7 @@ async def payment_ok(message: Message):
         update_balance(message.from_user.id, amount)
         await message.answer(f"✅ Оплата прошла! +{amount} Алмазов.")
 
-# ===== РАКЕТКА =====
+# ===== РАКЕТКА (НОВАЯ МАТЕМАТИКА) =====
 active_bets, player_names = {}, {}
 crash_mult, crash_running = 1.0, False
 clients, game_state = set(), "waiting"
@@ -225,18 +226,38 @@ async def game_loop():
         for i in range(10, 0, -1):
             await broadcast({"type": "waiting", "countdown": i, "players": active_bets, "names": player_names})
             await asyncio.sleep(1)
+            
         if not active_bets: continue
+        
+        # --- ГЕНЕРАТОР ТОЧКИ КРАША (СЛИВ) ---
+        roll = random.uniform(0, 100)
+        if roll < 45:
+            crash_target = random.uniform(1.00, 1.20) # 45% - Мгновенный краш
+        elif roll < 65:
+            crash_target = random.uniform(1.20, 1.50) # 20% - Небольшой краш
+        elif roll < 95:
+            crash_target = random.uniform(1.50, 5.00) # 30% - Средний икс
+        elif roll < 99.5:
+            crash_target = random.uniform(5.00, 20.00) # 4.5% - Высокий икс
+        else:
+            crash_target = random.uniform(20.00, 150.00) # 0.5% - Джекпот
+        # ------------------------------------
+            
         game_state = "flying"; crash_running = True
         await broadcast({"type": "start"})
+        
         while crash_running:
             await asyncio.sleep(0.1)
             crash_mult += 0.015 * crash_mult
-            if crash_mult > 1.5:
-                crash_chance = 0.01 * (crash_mult ** 0.5) 
-                if random.random() < crash_chance: crash_running = False
-            await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
+            
+            # Проверяем, не достигли ли мы точки краша
+            if crash_mult >= crash_target:
+                crash_running = False
+            else:
+                await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
+                
         game_state = "crashed"
-        await broadcast({"type": "crash", "multiplier": round(crash_mult, 2)})
+        await broadcast({"type": "crash", "multiplier": round(crash_target, 2)})
         await asyncio.sleep(3)
 
 @app.websocket("/ws/{user_id}")
@@ -248,17 +269,23 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
             if data.get("action") == "bet":
                 amt = float(data.get("amount", 0))
                 player_names[user_id] = data.get("name", "Игрок")
-                if game_state != "waiting": await websocket.send_json({"type": "error", "msg": "Ставки закрыты!"}); continue
-                if amt < 0.10: await websocket.send_json({"type": "error", "msg": "Мин. ставка 0.10"}); continue
+                if game_state != "waiting": 
+                    await websocket.send_json({"type": "error", "msg": "Ставки закрыты!"}); continue
+                if amt < 0.10: 
+                    await websocket.send_json({"type": "error", "msg": "Мин. ставка 0.10"}); continue
+                
                 if get_user(user_id)["balance"] >= amt:
                     update_balance(user_id, -amt); active_bets[user_id] = amt
                     await broadcast({"type": "waiting", "countdown": "...", "players": active_bets, "names": player_names})
-                else: await websocket.send_json({"type": "error", "msg": "Нет денег"})
+                else: 
+                    await websocket.send_json({"type": "error", "msg": "Нет денег"})
+            
             elif data.get("action") == "cashout":
                 if game_state == "flying" and user_id in active_bets:
                     bet = active_bets.pop(user_id); win = round(bet * crash_mult, 2)
                     update_balance(user_id, win); await websocket.send_json({"type": "cashed_out", "win": win})
-    except WebSocketDisconnect: clients.remove(websocket)
+    except WebSocketDisconnect: 
+        if websocket in clients: clients.remove(websocket)
 
 # ===== БОТ =====
 @dp.message(CommandStart())
