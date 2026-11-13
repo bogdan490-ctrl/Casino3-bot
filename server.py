@@ -18,7 +18,10 @@ from aiogram.fsm.storage.memory import MemoryStorage
 import uvicorn
 
 # ===== НАСТРОЙКИ =====
-BOT_TOKEN = "9280034478:AAHgmjytU79yLOsnh7HnksSOrlzBZ2rXNgA"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN не задан! Добавь в Environment Variables на Render.")
+
 ADMIN_ID = 8491030557
 WEB_APP_URL = "https://casino-bot-ojim.onrender.com"
 
@@ -121,6 +124,9 @@ def open_case_logic(case_id):
         else: cat = "legendary"
     return random.choice(GIFTS[cat])
 
+# ===== АКТИВНЫЕ СЕССИИ МИН =====
+mine_sessions = {}  # uid -> {"bet": float, "mines": set[int], "opened": set[int], "field": int, "mult": float}
+
 # ===== API =====
 class UserAction(BaseModel):
     user_id: str
@@ -129,6 +135,7 @@ class UserAction(BaseModel):
     case_id: str = ""
     amount: float = 0.0
     item_id: int = -1
+    cell: int = -1
 
 @app.post("/api/action")
 async def api_action(req: UserAction):
@@ -221,13 +228,22 @@ async def api_action(req: UserAction):
         return {"success": True, "shop": GIFTS}
 
     elif req.action == "buy_shop":
+        # Цена ТОЛЬКО с сервера — защита от подмены
+        real_item = None
+        for cat in GIFTS.values():
+            for g in cat:
+                if g["name"] == req.code:
+                    real_item = g; break
+            if real_item: break
+        if not real_item:
+            return {"success": False, "msg": "❌ Товар не найден"}
+        price = real_item["price"]
         balance = get_user(req.user_id)["balance"]
-        price = req.amount
-        if balance >= price:
-            update_balance(req.user_id, -price)
-            add_inv(req.user_id, req.code, price)
-            return {"success": True, "msg": f"✅ Куплено: {req.code} за {price} 💎"}
-        return {"success": False, "msg": "Недостаточно средств"}
+        if balance < price:
+            return {"success": False, "msg": f"❌ Недостаточно средств (нужно {price} 💎)"}
+        update_balance(req.user_id, -price)
+        add_inv(req.user_id, real_item["name"], real_item["price"])
+        return {"success": True, "msg": f"✅ Куплено: {real_item['name']} за {price} 💎", "new_balance": get_user(req.user_id)["balance"]}
 
     elif req.action == "buy":
         stars = int(req.amount * 100) 
@@ -245,6 +261,57 @@ async def api_action(req: UserAction):
         c.execute("SELECT uid, balance FROM users ORDER BY balance DESC LIMIT 10")
         top = c.fetchall(); conn.close()
         return {"success": True, "top": [{"id": u, "bal": round(b, 2)} for u, b in top]}
+
+    # ===== МИНЫ =====
+    elif req.action == "mines_start":
+        bet = req.amount
+        if bet < 0.10:
+            return {"success": False, "msg": "❌ Мин. ставка 0.10 💎"}
+        if get_user(req.user_id)["balance"] < bet:
+            return {"success": False, "msg": "❌ Недостаточно средств"}
+        update_balance(req.user_id, -bet)
+        # Поле 5x5 = 25 клеток, 5 мин (мало шансов на джекпот)
+        all_cells = list(range(25))
+        mines = set(random.sample(all_cells, 5))
+        mine_sessions[req.user_id] = {
+            "bet": bet, "mines": mines, "opened": set(), "mult": 1.0
+        }
+        return {"success": True, "msg": "💣 Игра началась! Открывай клетки."}
+
+    elif req.action == "mines_open":
+        sess = mine_sessions.get(req.user_id)
+        if not sess:
+            return {"success": False, "msg": "❌ Нет активной игры"}
+        cell = req.cell
+        if cell < 0 or cell > 24:
+            return {"success": False, "msg": "❌ Неверная клетка"}
+        if cell in sess["opened"]:
+            return {"success": False, "msg": "❌ Уже открыта"}
+
+        if cell in sess["mines"]:
+            # Проиграл
+            lost = sess["bet"]
+            del mine_sessions[req.user_id]
+            return {"success": True, "result": "boom", "cell": cell, "lost": lost,
+                    "mines": list(sess["mines"]) if False else None,
+                    "msg": f"💥 БУМ! Ты потерял {lost} 💎"}
+
+        # Открыл безопасную
+        sess["opened"].add(cell)
+        n = len(sess["opened"])
+        # Множитель: чем больше открыл, тем выше
+        sess["mult"] = round(1.0 + (n * 0.3) + (n * n * 0.05), 2)
+        return {"success": True, "result": "safe", "cell": cell, "mult": sess["mult"],
+                "opened": list(sess["opened"]), "msg": f"✅ Безопасно! x{sess['mult']}"}
+
+    elif req.action == "mines_cashout":
+        sess = mine_sessions.get(req.user_id)
+        if not sess or len(sess["opened"]) == 0:
+            return {"success": False, "msg": "❌ Нечего забирать"}
+        win = round(sess["bet"] * sess["mult"], 2)
+        update_balance(req.user_id, win)
+        del mine_sessions[req.user_id]
+        return {"success": True, "msg": f"💰 Забрал {win} 💎 (x{sess['mult']})", "win": win}
 
 @app.get("/api/balance/{user_id}")
 def api_balance(user_id: str): return {"balance": get_user(user_id)["balance"]}
@@ -280,7 +347,6 @@ async def game_loop():
             
         if not active_bets: continue
         
-        # МАТЕМАТИКА СЛИВА (45% - краш на 1.0-1.2)
         roll = random.uniform(0, 100)
         if roll < 45: crash_target = random.uniform(1.00, 1.20) 
         elif roll < 65: crash_target = random.uniform(1.20, 1.50) 
@@ -382,12 +448,14 @@ async def cmd_admin(message: Message):
 
 @dp.callback_query(F.data == "admin_give_self")
 async def admin_give_self(cb: CallbackQuery):
+    if cb.from_user.id != ADMIN_ID: return
     update_balance(ADMIN_ID, 100.0)
     await cb.message.answer(f"✅ Выдано 100 💎. Баланс: {get_user(ADMIN_ID)['balance']}")
     await cb.answer()
 
 @dp.callback_query(F.data == "admin_stats")
 async def admin_stats(cb: CallbackQuery):
+    if cb.from_user.id != ADMIN_ID: return
     conn = sqlite3.connect(DB_PATH); c = conn.cursor()
     c.execute("SELECT COUNT(*), SUM(balance) FROM users")
     row = c.fetchone(); conn.close()
