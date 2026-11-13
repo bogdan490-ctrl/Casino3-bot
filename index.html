@@ -44,7 +44,7 @@
         .btn.cashout { background: linear-gradient(135deg, #f59e0b, #eab308); color: #000; display: none; animation: pulse 1s infinite; border: none; }
         .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 10px; box-shadow: none; }
         
-        /* Кейсы */
+        /* Кейсы и Магазин */
         .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .case-card { background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; padding: 20px; border-radius: 20px; text-align: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; }
         .case-card:active { transform: scale(0.95); border-color: #10b981; }
@@ -85,6 +85,7 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('crash', event)">🚀 Ракетка</button>
         <button class="tab-btn" onclick="switchTab('cases', event)">📦 Кейсы</button>
+        <button class="tab-btn" onclick="switchTab('shop', event)">🛒 Магазин</button>
         <button class="tab-btn" onclick="switchTab('inv', event)">🎒 Инвентарь</button>
         <button class="tab-btn" onclick="switchTab('daily', event)">🎁 Бонус</button>
         <button class="tab-btn" onclick="switchTab('buy', event)">💳 Пополнить</button>
@@ -92,7 +93,6 @@
         <button class="tab-btn" onclick="switchTab('info', event)">ℹ️ Инфо</button>
     </div>
 
-    <!-- РАКЕТКА -->
     <div id="tab-crash" class="tab-content active">
         <div class="crash-area" id="crash-area">
             <div class="rocket" id="rocket">🚀</div>
@@ -108,37 +108,24 @@
         <button class="btn cashout" id="btn-cashout" onclick="cashOut()">ЗАБРАТЬ</button>
     </div>
 
-    <!-- КЕЙСЫ -->
     <div id="tab-cases" class="tab-content">
         <div class="roulette">
             <div class="roulette-center"></div>
             <div class="roulette-strip" id="roulette-strip"></div>
         </div>
         <div class="cases-grid">
-            <div class="case-card" onclick="openCase('bronze')">
-                <div class="case-icon">🥉</div>
-                <div class="case-name">Бронза</div>
-                <div class="case-price">2.00 💎</div>
-            </div>
-            <div class="case-card" onclick="openCase('silver')">
-                <div class="case-icon">🥈</div>
-                <div class="case-name">Серебро</div>
-                <div class="case-price">5.00 💎</div>
-            </div>
-            <div class="case-card" onclick="openCase('gold')">
-                <div class="case-icon">🥇</div>
-                <div class="case-name">Золото</div>
-                <div class="case-price">10.00 💎</div>
-            </div>
-            <div class="case-card" onclick="openCase('diamond')">
-                <div class="case-icon">💎</div>
-                <div class="case-name">Алмаз</div>
-                <div class="case-price">20.00 💎</div>
-            </div>
+            <div class="case-card" onclick="openCase('bronze')"><div class="case-icon">🥉</div><div class="case-name">Бронза</div><div class="case-price">2.00 💎</div></div>
+            <div class="case-card" onclick="openCase('silver')"><div class="case-icon">🥈</div><div class="case-name">Серебро</div><div class="case-price">5.00 💎</div></div>
+            <div class="case-card" onclick="openCase('gold')"><div class="case-icon">🥇</div><div class="case-name">Золото</div><div class="case-price">10.00 💎</div></div>
+            <div class="case-card" onclick="openCase('diamond')"><div class="case-icon">💎</div><div class="case-name">Алмаз</div><div class="case-price">20.00 💎</div></div>
         </div>
     </div>
 
-    <!-- ИНВЕНТАРЬ -->
+    <div id="tab-shop" class="tab-content">
+        <div class="info-text" style="text-align:center; margin-bottom:15px;">Покупай подарки напрямую без рандома!</div>
+        <div class="cases-grid" id="shop-list"></div>
+    </div>
+
     <div id="tab-inv" class="tab-content">
         <button class="btn" style="background:#f59e0b; color:#000; margin-bottom:15px;" onclick="sellAll()">💰 Продать всё</button>
         <div class="inv-grid" id="inventory-list">
@@ -146,7 +133,6 @@
         </div>
     </div>
 
-    <!-- БОНУС -->
     <div id="tab-daily" class="tab-content">
         <div class="info-text" style="text-align:center;">
             <div style="font-size: 50px; margin-bottom: 10px;">🎁</div>
@@ -156,7 +142,6 @@
         </div>
     </div>
 
-    <!-- ПОПОЛНЕНИЕ -->
     <div id="tab-buy" class="tab-content">
         <div style="text-align:center; margin-bottom: 20px; font-weight:bold; color:#10b981;">Курс: 10 ⭐ = 0.10 💎</div>
         <div class="case-card" style="margin-bottom:10px;" onclick="buyCrystals(0.10)">0.10 💎 <br><span style="font-size:12px; color:#64748b;">10 ⭐</span></div>
@@ -164,7 +149,6 @@
         <div class="case-card" style="margin-bottom:10px;" onclick="buyCrystals(1.00)">1.00 💎 <br><span style="font-size:12px; color:#64748b;">100 ⭐</span></div>
     </div>
 
-    <!-- ПРОФИЛЬ -->
     <div id="tab-profile" class="tab-content">
         <div class="info-text">
             <b>👤 Профиль</b><br><br>
@@ -179,7 +163,6 @@
         <button class="btn btn-secondary" onclick="getRefLink()">🔗 Пригласить друга</button>
     </div>
 
-    <!-- ИНФО -->
     <div id="tab-info" class="tab-content">
         <div class="info-text">
             <b>📜 Информация:</b><br><br>
@@ -192,14 +175,9 @@
     </div>
 
     <script>
-        // Безопасная инициализация Telegram WebApp
         const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready(); 
-            tg.expand();
-        }
+        if (tg) { tg.ready(); tg.expand(); }
         
-        // Заглушки для тестирования вне Telegram
         let userId = tg?.initDataUnsafe?.user?.id || 12345;
         let userName = tg?.initDataUnsafe?.user?.first_name || "Игрок";
         
@@ -208,13 +186,8 @@
         
         document.getElementById('prof-id').innerText = userId;
 
-        // Безопасный алерт (работает и в ТГ и в браузере)
         function showAlert(msg) {
-            if (tg && tg.showAlert) {
-                tg.showAlert(msg);
-            } else {
-                alert(msg);
-            }
+            if (tg && tg.showAlert) { tg.showAlert(msg); } else { alert(msg); }
         }
 
         async function loadBalance() {
@@ -224,9 +197,7 @@
                 currentBalance = data.balance || 0;
                 document.getElementById('balance').innerText = currentBalance.toFixed(2);
                 document.getElementById('prof-bal').innerText = currentBalance.toFixed(2);
-            } catch (e) {
-                console.error("Ошибка загрузки баланса:", e);
-            }
+            } catch (e) { console.error("Ошибка загрузки баланса:", e); }
         }
 
         function switchTab(tab, event) {
@@ -234,7 +205,9 @@
             document.querySelectorAll('.tabs .tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
             if(event) event.target.classList.add('active');
+            
             if(tab === 'inv') loadInventory();
+            if(tab === 'shop') loadShop();
         }
 
         async function apiAction(action, data = {}) {
@@ -244,15 +217,12 @@
                     body: JSON.stringify({ user_id: String(userId), action: action, ...data })
                 });
                 return await res.json();
-            } catch (e) {
-                console.error("Ошибка API:", e);
-                return { success: false, msg: "Ошибка соединения с сервером" };
-            }
+            } catch (e) { return { success: false, msg: "Ошибка сети" }; }
         }
 
         async function openDaily() {
             const btn = document.getElementById('btn-daily');
-            btn.disabled = true; // Защита от спама
+            btn.disabled = true;
             const res = await apiAction("daily_case");
             showAlert(res.msg);
             if (res.success) loadBalance();
@@ -287,7 +257,6 @@
         }
 
         async function openCase(caseId) {
-            // Блокируем все кейсы от двойного клика
             const caseCards = document.querySelectorAll('.case-card');
             caseCards.forEach(c => c.style.pointerEvents = 'none');
 
@@ -300,7 +269,7 @@
             
             const strip = document.getElementById('roulette-strip');
             strip.innerHTML = '';
-            const icons = ['🧸', '🌹', '🍰', '💎', '🚀', '👑'];
+            const icons = ['🧸', '🌹', '🍰', '💎', '🚀', '👑', '🎁', '🎈', '🍕', '🐉', '🦄'];
             let winIndex = 30;
             for (let i = 0; i < 40; i++) {
                 const el = document.createElement('div');
@@ -309,11 +278,8 @@
                 strip.appendChild(el);
             }
             
-            // Сброс анимации
             strip.style.transition = 'none'; 
             strip.style.transform = 'translateX(0)';
-            
-            // Принудительный reflow для применения стилей
             void strip.offsetWidth; 
 
             setTimeout(() => {
@@ -325,8 +291,38 @@
             setTimeout(() => { 
                 showAlert(`🎉 Выпало: ${res.item} (${res.price} 💎)`); 
                 loadBalance(); 
-                caseCards.forEach(c => c.style.pointerEvents = 'auto'); // Разблокируем
+                caseCards.forEach(c => c.style.pointerEvents = 'auto');
             }, 4000);
+        }
+
+        async function loadShop() {
+            const res = await apiAction("get_shop");
+            const list = document.getElementById('shop-list');
+            list.innerHTML = '';
+            if (!res.success) return;
+            
+            let allShop = [];
+            for (let cat in res.shop) { allShop = allShop.concat(res.shop[cat]); }
+            allShop.sort((a, b) => a.price - b.price);
+
+            allShop.forEach((item) => {
+                const el = document.createElement('div');
+                el.className = 'case-card';
+                el.innerHTML = `
+                    <div class="case-icon">${item.name.split(' ')[0]}</div>
+                    <div class="case-name" style="font-size:11px;">${item.name.substring(2)}</div>
+                    <div class="case-price">${item.price} 💎</div>
+                    <button class="btn btn-secondary" style="margin-top:5px; padding:8px;" onclick="buyShop('${item.name}', ${item.price})">Купить</button>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        async function buyShop(name, price) {
+            if (currentBalance < price) return showAlert("Мало денег!");
+            const res = await apiAction("buy_shop", { code: name, amount: price });
+            showAlert(res.msg);
+            if (res.success) loadBalance();
         }
 
         async function loadInventory() {
@@ -372,7 +368,6 @@
             }
         }
 
-        // РАКЕТКА
         let isBetPlaced = false, gameState = "waiting", currentMult = 1.0;
 
         function connectWS() {
