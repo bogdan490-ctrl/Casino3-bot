@@ -21,7 +21,6 @@
         .tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
         .tab-content.active { display: flex; }
         
-        /* Ракетка */
         .crash-area { flex: 1; background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #1f2926; margin-bottom: 10px; min-height: 180px; }
         .multiplier { font-size: 54px; font-weight: 900; color: #10b981; z-index: 11; font-family: monospace; text-shadow: 0 0 40px rgba(16, 185, 129, 0.6); }
         .multiplier.crashed { color: #ef4444; animation: shake 0.5s; text-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
@@ -44,7 +43,6 @@
         .btn.cashout { background: linear-gradient(135deg, #f59e0b, #eab308); color: #000; display: none; animation: pulse 1s infinite; border: none; }
         .btn-secondary { background: #121618; border: 1px solid #1f2926; color: #94a3b8; margin-top: 10px; box-shadow: none; }
         
-        /* Кейсы и Магазин */
         .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .case-card { background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; padding: 20px; border-radius: 20px; text-align: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; }
         .case-card:active { transform: scale(0.95); border-color: #10b981; }
@@ -53,13 +51,11 @@
         .case-name { font-size: 14px; font-weight: 900; color: #fff; position: relative; z-index: 2; }
         .case-price { font-size: 12px; color: #10b981; font-weight: 700; margin-top: 5px; position: relative; z-index: 2; }
         
-        /* Рулетка (Анимация) */
         .roulette { height: 100px; background: #0d1112; border-radius: 15px; margin-bottom: 20px; position: relative; overflow: hidden; border: 1px solid #1f2926; display: flex; align-items: center; }
         .roulette-strip { display: flex; transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); }
         .roulette-item { min-width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 30px; border-right: 1px solid #1f2926; color: #fff; }
         .roulette-center { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #10b981; transform: translateX(-50%); z-index: 5; box-shadow: 0 0 10px #10b981; }
         
-        /* Инвентарь */
         .inv-grid { display: flex; flex-direction: column; gap: 10px; }
         .inv-item { background: #0d1112; border: 1px solid #1f2926; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
         .inv-info { display: flex; flex-direction: column; }
@@ -67,10 +63,50 @@
         .inv-price { font-size: 13px; color: #10b981; font-weight: 700; margin-top: 3px; }
         .btn-sell { background: #f59e0b; color: #000; border: none; padding: 10px 15px; border-radius: 10px; font-weight: 900; cursor: pointer; }
         
-        /* Разное */
         .info-text { font-size: 14px; color: #94a3b8; line-height: 1.6; text-align: left; background: #0d1112; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; }
         .promo-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #1f2926; background: #090a0b; color: #10b981; margin-bottom: 15px; text-align: center; font-weight: 900; font-size: 16px; text-transform: uppercase; outline: none; }
-        
+
+        /* === КРАСИВЫЙ ИНФО-БЛОК === */
+        .info-hero { background: linear-gradient(135deg, #064e3b 0%, #0d1112 60%); border: 1px solid #10b981; border-radius: 20px; padding: 22px; margin-bottom: 16px; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); }
+        .info-hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(16,185,129,0.35), transparent 70%); animation: rotate 8s linear infinite; }
+        .info-hero h1 { font-size: 24px; font-weight: 900; margin: 0 0 6px 0; background: linear-gradient(90deg, #34d399, #10b981, #facc15); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; z-index: 2; letter-spacing: 1px; }
+        .info-hero p { color: #94a3b8; font-size: 13px; margin: 0; line-height: 1.5; position: relative; z-index: 2; }
+        .info-hero .version-badge { display: inline-block; margin-top: 12px; background: rgba(16,185,129,0.15); border: 1px solid #10b981; color: #34d399; font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 8px; letter-spacing: 1px; position: relative; z-index: 2; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .info-tile { background: linear-gradient(135deg, #121618, #0d1112); border: 1px solid #1f2926; border-radius: 16px; padding: 14px 12px; position: relative; overflow: hidden; transition: 0.2s; }
+        .info-tile:active { transform: scale(0.97); border-color: #10b981; }
+        .info-tile .tile-icon { font-size: 26px; margin-bottom: 6px; display: block; filter: drop-shadow(0 0 8px rgba(16,185,129,0.4)); }
+        .info-tile .tile-label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+        .info-tile .tile-value { font-size: 14px; color: #34d399; font-weight: 900; }
+        .info-section { background: #0d1112; border: 1px solid #1f2926; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+        .info-section .section-title { font-size: 13px; font-weight: 900; color: #10b981; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .info-section .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #1f2926, transparent); }
+        .rule-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px dashed #1f2926; font-size: 13px; }
+        .rule-row:last-child { border-bottom: none; }
+        .rule-row .rule-label { color: #94a3b8; }
+        .rule-row .rule-value { color: #34d399; font-weight: 900; }
+        .warning-card { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.02)); border: 1px solid #ef4444; border-radius: 16px; padding: 16px; box-shadow: 0 0 20px rgba(239,68,68,0.15); margin-bottom: 12px; }
+        .warning-card .warn-title { color: #ef4444; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .warning-card p { font-size: 12px; color: #fca5a5; line-height: 1.6; margin: 0; }
+        .social-links { display: flex; flex-direction: column; gap: 8px; }
+        .social-link { display: flex; justify-content: space-between; align-items: center; background: #090a0b; border: 1px solid #1f2926; padding: 12px 14px; border-radius: 12px; color: #e2e8f0; text-decoration: none; font-size: 13px; font-weight: 700; transition: 0.2s; }
+        .social-link:active { transform: scale(0.98); border-color: #10b981; color: #34d399; }
+        .social-link .arrow { color: #10b981; font-size: 16px; }
+
+        /* === МИНЫ === */
+        .mines-header { background: linear-gradient(135deg, #121618, #0d1112); border: 1px solid #1f2926; border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .mines-header .mines-mult { font-size: 22px; font-weight: 900; color: #facc15; font-family: monospace; }
+        .mines-header .mines-info { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+        .mine-cell { aspect-ratio: 1; background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: 0.15s; position: relative; overflow: hidden; }
+        .mine-cell:active { transform: scale(0.9); }
+        .mine-cell.opened { background: linear-gradient(135deg, #064e3b, #065f46); border-color: #10b981; cursor: default; }
+        .mine-cell.boom { background: linear-gradient(135deg, #7f1d1d, #450a0a); border-color: #ef4444; animation: shake 0.4s; }
+        .mine-cell.mine-show { background: #121618; border-color: #ef4444; opacity: 0.7; }
+        .mine-cell.disabled { pointer-events: none; }
+        .mines-actions { display: flex; gap: 10px; }
+        .mines-actions .btn { font-size: 13px; padding: 14px; }
+
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes rotate { 100% { transform: rotate(360deg); } }
@@ -84,6 +120,7 @@
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('crash', event)">🚀 Ракетка</button>
+        <button class="tab-btn" onclick="switchTab('mines', event)">💣 Мины</button>
         <button class="tab-btn" onclick="switchTab('cases', event)">📦 Кейсы</button>
         <button class="tab-btn" onclick="switchTab('shop', event)">🛒 Магазин</button>
         <button class="tab-btn" onclick="switchTab('inv', event)">🎒 Инвентарь</button>
@@ -106,6 +143,31 @@
             <button class="btn" id="btn-bet" onclick="placeBet()" style="width: 40%; margin:0;">В ИГРУ</button>
         </div>
         <button class="btn cashout" id="btn-cashout" onclick="cashOut()">ЗАБРАТЬ</button>
+    </div>
+
+    <div id="tab-mines" class="tab-content">
+        <div class="mines-header">
+            <div>
+                <div class="mines-info">Множитель</div>
+                <div class="mines-mult" id="mines-mult">x1.00</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="mines-info">Открыто</div>
+                <div class="mines-mult" id="mines-opened" style="color:#34d399;">0 / 20</div>
+            </div>
+        </div>
+        <div class="mines-grid" id="mines-grid"></div>
+        <div class="controls" style="margin-bottom:10px;">
+            <input type="number" id="mines-bet" class="input-bet" placeholder="Ставка" value="0.10" step="0.01">
+            <button class="btn" id="btn-mines-start" onclick="minesStart()" style="width: 40%; margin:0;">СТАРТ</button>
+        </div>
+        <div class="mines-actions">
+            <button class="btn cashout" id="btn-mines-cashout" onclick="minesCashout()" style="display:none; margin:0;">💰 ЗАБРАТЬ</button>
+        </div>
+        <div class="info-section" style="margin-top:15px;">
+            <div class="section-title">💣 Правила</div>
+            <p>Поле 5×5. Открывай клетки, избегай 5 мин. Чем больше открыл — тем выше множитель. Забери в любой момент!</p>
+        </div>
     </div>
 
     <div id="tab-cases" class="tab-content">
@@ -164,14 +226,39 @@
     </div>
 
     <div id="tab-info" class="tab-content">
-        <div class="info-text">
-            <b>📜 Информация:</b><br><br>
-            • <b>Вывод:</b> от 10 💎 (10 💎 = 100 ⭐).<br>
-            • <b>Пополнение:</b> 0.10 💎 = 10 ⭐.<br>
-            • <b>Рефералка:</b> +1.00 💎 за друга.<br>
-            • <b>Бонус:</b> Ежедневный кейс.<br><br>
-            <i>Игра создана исключительно для развлечения. Не тратьте последние деньги!</i>
+        <div class="info-hero">
+            <h1>LEGENDSTARS 🚀</h1>
+            <p>Мини-игра с реальными наградами. Играй, собирай подарки, выводи звёзды!</p>
+            <span class="version-badge">v4.0 • 2026</span>
         </div>
+        <div class="info-grid">
+            <div class="info-tile"><span class="tile-icon">💸</span><div class="tile-label">Вывод</div><div class="tile-value">от 10 💎</div></div>
+            <div class="info-tile"><span class="tile-icon">💳</span><div class="tile-label">Курс</div><div class="tile-value">10 ⭐ = 0.10 💎</div></div>
+            <div class="info-tile"><span class="tile-icon">🔗</span><div class="tile-label">За друга</div><div class="tile-value">+1.00 💎</div></div>
+            <div class="info-tile"><span class="tile-icon">🎁</span><div class="tile-label">Бонус</div><div class="tile-value">Каждый день</div></div>
+        </div>
+        <div class="info-section">
+            <div class="section-title">📜 Правила</div>
+            <div class="rule-row"><span class="rule-label">💎 Вывод средств</span><span class="rule-value">от 10 💎</span></div>
+            <div class="rule-row"><span class="rule-label">⭐ Комиссия вывода</span><span class="rule-value">10 ⭐ за 1 💎</span></div>
+            <div class="rule-row"><span class="rule-label">🚀 Мин. ставка</span><span class="rule-value">0.10 💎</span></div>
+            <div class="rule-row"><span class="rule-label">💣 Мины (поле)</span><span class="rule-value">5×5, 5 мин</span></div>
+            <div class="rule-row"><span class="rule-label">📦 Продажа подарка</span><span class="rule-value">80% цены</span></div>
+            <div class="rule-row"><span class="rule-label">🔗 Рефералка</span><span class="rule-value">+1.00 💎</span></div>
+        </div>
+        <div class="info-section">
+            <div class="section-title">📢 Наши каналы</div>
+            <div class="social-links">
+                <a href="https://t.me/Lgendsstars" target="_blank" class="social-link"><span>📰 Новостной канал</span><span class="arrow">➔</span></a>
+                <a href="https://t.me/Legendsstartsbot" target="_blank" class="social-link"><span>🆘 Техподдержка</span><span class="arrow">➔</span></a>
+            </div>
+        </div>
+        <div class="warning-card">
+            <div class="warn-title">⚠️ Внимание</div>
+            <p>• Игра создана исключительно для развлечения. Не тратьте последние деньги!<br><br>
+               • <b>Бот в разработке.</b> За найденные баги полагается компенсация — пишите в техподдержку.</p>
+        </div>
+        <div style="text-align:center; font-size:10px; color:#475569; margin-top:10px; letter-spacing:1px;">© 2026 LEGENDSTARS • ALL RIGHTS RESERVED</div>
     </div>
 
     <script>
@@ -180,7 +267,6 @@
         
         let userId = tg?.initDataUnsafe?.user?.id || 12345;
         let userName = tg?.initDataUnsafe?.user?.first_name || "Игрок";
-        
         let currentBalance = 0;
         let ws;
         
@@ -208,6 +294,7 @@
             
             if(tab === 'inv') loadInventory();
             if(tab === 'shop') loadShop();
+            if(tab === 'mines') renderMinesGrid();
         }
 
         async function apiAction(action, data = {}) {
@@ -220,6 +307,7 @@
             } catch (e) { return { success: false, msg: "Ошибка сети" }; }
         }
 
+        // ===== ЕЖЕДНЕВНЫЙ БОНУС =====
         async function openDaily() {
             const btn = document.getElementById('btn-daily');
             btn.disabled = true;
@@ -245,9 +333,10 @@
             if (res.success) { loadBalance(); document.getElementById('withdraw-amount').value = ''; }
         }
 
-        function buyCrystals(amount) {
-            fetch('/api/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: String(userId), action: "buy", amount: amount }) });
-            if (tg) tg.close();
+        async function buyCrystals(amount) {
+            const res = await apiAction("buy", { amount: amount });
+            if (!res.success) return showAlert(res.msg || "Ошибка оплаты");
+            showAlert("✅ Счёт выставлен! Оплати его в чате с ботом.");
         }
 
         function getRefLink() { 
@@ -256,8 +345,9 @@
             else window.open(link, '_blank');
         }
 
+        // ===== КЕЙСЫ =====
         async function openCase(caseId) {
-            const caseCards = document.querySelectorAll('.case-card');
+            const caseCards = document.querySelectorAll('#tab-cases .case-card');
             caseCards.forEach(c => c.style.pointerEvents = 'none');
 
             const res = await apiAction("open_case", { case_id: caseId });
@@ -270,7 +360,7 @@
             const strip = document.getElementById('roulette-strip');
             strip.innerHTML = '';
             const icons = ['🧸', '🌹', '🍰', '💎', '🚀', '👑', '🎁', '🎈', '🍕', '🐉', '🦄'];
-            let winIndex = 30;
+            let winIndex = 25 + Math.floor(Math.random() * 10);
             for (let i = 0; i < 40; i++) {
                 const el = document.createElement('div');
                 el.className = 'roulette-item';
@@ -295,6 +385,7 @@
             }, 4000);
         }
 
+        // ===== МАГАЗИН =====
         async function loadShop() {
             const res = await apiAction("get_shop");
             const list = document.getElementById('shop-list');
@@ -308,23 +399,35 @@
             allShop.forEach((item) => {
                 const el = document.createElement('div');
                 el.className = 'case-card';
+                const icon = item.name.split(' ')[0];
+                const cleanName = item.name.substring(icon.length).trim();
                 el.innerHTML = `
-                    <div class="case-icon">${item.name.split(' ')[0]}</div>
-                    <div class="case-name" style="font-size:11px;">${item.name.substring(2)}</div>
+                    <div class="case-icon">${icon}</div>
+                    <div class="case-name" style="font-size:11px;">${cleanName}</div>
                     <div class="case-price">${item.price} 💎</div>
-                    <button class="btn btn-secondary" style="margin-top:5px; padding:8px;" onclick="buyShop('${item.name}', ${item.price})">Купить</button>
+                    <button class="btn btn-secondary buy-btn" style="margin-top:5px; padding:8px; position:relative; z-index:5;">Купить</button>
                 `;
+                const btn = el.querySelector('.buy-btn');
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    buyShop(item.name, btn);
+                });
                 list.appendChild(el);
             });
         }
 
-        async function buyShop(name, price) {
-            if (currentBalance < price) return showAlert("Мало денег!");
-            const res = await apiAction("buy_shop", { code: name, amount: price });
-            showAlert(res.msg);
-            if (res.success) loadBalance();
+        async function buyShop(name, btn) {
+            if (btn) { btn.disabled = true; btn.innerText = "⏳"; }
+            const res = await apiAction("buy_shop", { code: name });
+            showAlert(res.msg || (res.success ? "✅ Куплено" : "❌ Ошибка"));
+            if (res.success) {
+                await loadBalance();
+                if (document.getElementById('tab-inv').classList.contains('active')) loadInventory();
+            }
+            if (btn) { btn.disabled = false; btn.innerText = "Купить"; }
         }
 
+        // ===== ИНВЕНТАРЬ =====
         async function loadInventory() {
             const res = await apiAction("get_inv");
             const list = document.getElementById('inventory-list');
@@ -341,8 +444,9 @@
                         <div class="inv-name">${item.name}</div>
                         <div class="inv-price">Цена: ${item.price} 💎 (Продажа: ${(item.price * 0.8).toFixed(2)} 💎)</div>
                     </div>
-                    <button class="btn-sell" onclick="sellItem(${item.id})">Продать</button>
+                    <button class="btn-sell">Продать</button>
                 `;
+                el.querySelector('.btn-sell').addEventListener('click', () => sellItem(item.id));
                 list.appendChild(el);
             });
         }
@@ -368,6 +472,93 @@
             }
         }
 
+        // ===== МИНЫ =====
+        let minesActive = false;
+
+        function renderMinesGrid() {
+            const grid = document.getElementById('mines-grid');
+            if (grid.children.length > 0 && minesActive) return;
+            grid.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'mine-cell';
+                cell.dataset.idx = i;
+                cell.addEventListener('click', () => minesOpen(i, cell));
+                grid.appendChild(cell);
+            }
+        }
+
+        async function minesStart() {
+            const bet = parseFloat(document.getElementById('mines-bet').value);
+            if (!bet || bet < 0.10) return showAlert("Мин. ставка 0.10 💎");
+            if (currentBalance < bet) return showAlert("Мало денег!");
+            const btn = document.getElementById('btn-mines-start');
+            btn.disabled = true;
+            const res = await apiAction("mines_start", { amount: bet });
+            if (!res.success) { showAlert(res.msg); btn.disabled = false; return; }
+            
+            minesActive = true;
+            document.getElementById('mines-mult').innerText = "x1.00";
+            document.getElementById('mines-opened').innerText = "0 / 20";
+            document.getElementById('btn-mines-cashout').style.display = 'none';
+            
+            const grid = document.getElementById('mines-grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'mine-cell';
+                cell.dataset.idx = i;
+                cell.addEventListener('click', () => minesOpen(i, cell));
+                grid.appendChild(cell);
+            }
+            loadBalance();
+        }
+
+        async function minesOpen(idx, cell) {
+            if (!minesActive || cell.classList.contains('opened') || cell.classList.contains('disabled')) return;
+            cell.classList.add('disabled');
+            const res = await apiAction("mines_open", { cell: idx });
+            
+            if (!res.success) {
+                showAlert(res.msg);
+                cell.classList.remove('disabled');
+                return;
+            }
+
+            if (res.result === "boom") {
+                cell.classList.add('boom');
+                cell.innerText = "💣";
+                minesActive = false;
+                document.querySelectorAll('.mine-cell').forEach(c => c.classList.add('disabled'));
+                document.getElementById('btn-mines-start').disabled = false;
+                document.getElementById('btn-mines-cashout').style.display = 'none';
+                setTimeout(() => showAlert(res.msg), 300);
+                loadBalance();
+            } else {
+                cell.classList.add('opened');
+                cell.innerText = "💎";
+                cell.classList.remove('disabled');
+                document.getElementById('mines-mult').innerText = `x${res.mult.toFixed(2)}`;
+                document.getElementById('mines-opened').innerText = `${res.opened.length} / 20`;
+                document.getElementById('btn-mines-cashout').style.display = 'block';
+                loadBalance();
+            }
+        }
+
+        async function minesCashout() {
+            if (!minesActive) return;
+            const res = await apiAction("mines_cashout");
+            showAlert(res.msg);
+            if (res.success) {
+                minesActive = false;
+                document.querySelectorAll('.mine-cell').forEach(c => c.classList.add('disabled'));
+                document.getElementById('btn-mines-start').disabled = false;
+                document.getElementById('btn-mines-cashout').style.display = 'none';
+                loadBalance();
+            }
+        }
+
+        // ===== РАКЕТКА =====
         let isBetPlaced = false, gameState = "waiting", currentMult = 1.0;
 
         function connectWS() {
@@ -452,6 +643,7 @@
             ws.send(JSON.stringify({ action: 'cashout' }));
         }
 
+        renderMinesGrid();
         loadBalance(); connectWS();
     </script>
 </body>
