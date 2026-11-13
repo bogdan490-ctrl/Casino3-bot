@@ -272,7 +272,7 @@ async def api_action(req: UserAction):
         update_balance(req.user_id, -bet)
         # Поле 5x5 = 25 клеток, 5 мин (мало шансов на джекпот)
         all_cells = list(range(25))
-        mines = set(random.sample(all_cells, 5))
+        mines = set(random.sample(all_cells, 12))
         mine_sessions[req.user_id] = {
             "bet": bet, "mines": mines, "opened": set(), "mult": 1.0
         }
