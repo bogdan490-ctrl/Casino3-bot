@@ -18,8 +18,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 import uvicorn
 
 # ===== НАСТРОЙКИ =====
-# Токен теперь берется из переменных окружения Render (Environment Variables)
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "ТВОЙ_ТОКЕН_СЮДА_ЕСЛИ_ТЕСТИРУЕШЬ_ЛОКАЛЬНО")
+BOT_TOKEN = "9280034478:AAHgmjytU79yLOsnh7HnksSOrlzBZ2rXNgA"
 ADMIN_ID = 8491030557
 WEB_APP_URL = "https://casino-bot-ojim.onrender.com"
 
@@ -65,6 +64,63 @@ def get_inv(uid):
     c.execute("SELECT id, item_name, item_price FROM inventory WHERE uid=?", (str(uid),))
     rows = c.fetchall(); conn.close(); return rows
 
+# ===== БАЗА ПОДАРКОВ =====
+GIFTS = {
+    "common": [
+        {"name": "🌹 Роза", "price": 0.5}, {"name": "🧸 Мишка", "price": 0.8},
+        {"name": "🎁 Подарок", "price": 1.0}, {"name": "🍰 Тортик", "price": 1.2},
+        {"name": "🎈 Шарик", "price": 0.3}, {"name": "🍕 Пицца", "price": 1.5},
+        {"name": "💌 Письмо", "price": 0.4}, {"name": "🎓 Диплом", "price": 1.8},
+        {"name": "🍀 Клевер", "price": 1.0}, {"name": "🍄 Гриб", "price": 0.6},
+        {"name": "🍉 Арбуз", "price": 0.9}, {"name": "🍔 Бургер", "price": 1.3},
+        {"name": "🎂 Торт", "price": 2.0}, {"name": "🏀 Мяч", "price": 0.7},
+        {"name": "🎧 Наушники", "price": 1.9}, {"name": "☕ Кофе", "price": 0.5}
+    ],
+    "uncommon": [
+        {"name": "🌻 Подсолнух", "price": 3.0}, {"name": "🐱 Кот", "price": 4.0},
+        {"name": "🐶 Собака", "price": 3.5}, {"name": "🦊 Лиса", "price": 4.5},
+        {"name": "🐼 Панда", "price": 5.0}, {"name": "🏆 Кубок", "price": 4.0},
+        {"name": "🚗 Машина", "price": 5.0}, {"name": "✈️ Самолет", "price": 4.8}
+    ],
+    "rare": [
+        {"name": "💎 Кристалл", "price": 10.0}, {"name": "🔮 Шар", "price": 12.0},
+        {"name": "🦄 Единорог", "price": 15.0}, {"name": "🦁 Лев", "price": 18.0},
+        {"name": "🐉 Дракон", "price": 25.0}, {"name": "💍 Кольцо", "price": 20.0}
+    ],
+    "legendary": [
+        {"name": "🚀 Ракета", "price": 50.0}, {"name": "👑 Корона", "price": 100.0},
+        {"name": "💎 Эксклюзив", "price": 250.0}, {"name": "🐸 Пепе", "price": 500.0},
+        {"name": "🏆 Кубок Мира", "price": 1000.0}, {"name": "🦍 Горилла", "price": 300.0}
+    ]
+}
+
+def open_case_logic(case_id):
+    if case_id == "bronze":
+        roll = random.uniform(0, 100)
+        if roll < 85: cat = "common"
+        elif roll < 97: cat = "uncommon"
+        elif roll < 99.9: cat = "rare"
+        else: cat = "legendary"
+    elif case_id == "silver":
+        roll = random.uniform(0, 100)
+        if roll < 60: cat = "common"
+        elif roll < 90: cat = "uncommon"
+        elif roll < 99: cat = "rare"
+        else: cat = "legendary"
+    elif case_id == "gold":
+        roll = random.uniform(0, 100)
+        if roll < 30: cat = "common"
+        elif roll < 70: cat = "uncommon"
+        elif roll < 95: cat = "rare"
+        else: cat = "legendary"
+    elif case_id == "diamond":
+        roll = random.uniform(0, 100)
+        if roll < 10: cat = "common"
+        elif roll < 30: cat = "uncommon"
+        elif roll < 80: cat = "rare"
+        else: cat = "legendary"
+    return random.choice(GIFTS[cat])
+
 # ===== API =====
 class UserAction(BaseModel):
     user_id: str
@@ -99,9 +155,11 @@ async def api_action(req: UserAction):
             conn.commit(); conn.close()
             
             if random.random() < 0.01:
-                item = {"name": "🚀 Ракета", "price": 50.0}
+                item = random.choice(GIFTS["legendary"])
+            elif random.random() < 0.1:
+                item = random.choice(GIFTS["rare"])
             else:
-                item = {"name": "🧸 Мишка", "price": 1.0}
+                item = random.choice(GIFTS["common"])
             add_inv(req.user_id, item["name"], item["price"])
             return {"success": True, "item": item["name"], "price": item["price"], "msg": f"🎁 Выпало: {item['name']}"}
         return {"success": False, "msg": "❌ Приходи завтра!"}
@@ -126,25 +184,7 @@ async def api_action(req: UserAction):
         if balance < price: return {"success": False, "msg": "Недостаточно средств"}
         
         update_balance(req.user_id, -price)
-        
-        choices = [
-            {"name": "🧸 Мишка", "price": 1.0, "weight": 55},
-            {"name": "🌹 Роза", "price": 3.0, "weight": 25},
-            {"name": "🍰 Торт", "price": 5.0, "weight": 12},
-            {"name": "💎 Кристалл", "price": 15.0, "weight": 6},
-            {"name": "🚀 Ракета", "price": 50.0, "weight": 1.5},
-            {"name": "👑 Корона", "price": 100.0, "weight": 0.5} 
-        ]
-        
-        total_weight = sum(c["weight"] for c in choices)
-        r = random.uniform(0, total_weight)
-        upto = 0
-        item = choices[0]
-        for c in choices:
-            if upto + c["weight"] >= r:
-                item = c; break
-            upto += c["weight"]
-            
+        item = open_case_logic(req.case_id)
         add_inv(req.user_id, item["name"], item["price"])
         return {"success": True, "item": item["name"], "price": item["price"], "new_balance": get_user(req.user_id)["balance"]}
 
@@ -177,6 +217,18 @@ async def api_action(req: UserAction):
         inv = get_inv(req.user_id)
         return {"success": True, "inv": [{"id": i[0], "name": i[1], "price": i[2]} for i in inv]}
 
+    elif req.action == "get_shop":
+        return {"success": True, "shop": GIFTS}
+
+    elif req.action == "buy_shop":
+        balance = get_user(req.user_id)["balance"]
+        price = req.amount
+        if balance >= price:
+            update_balance(req.user_id, -price)
+            add_inv(req.user_id, req.code, price)
+            return {"success": True, "msg": f"✅ Куплено: {req.code} за {price} 💎"}
+        return {"success": False, "msg": "Недостаточно средств"}
+
     elif req.action == "buy":
         stars = int(req.amount * 100) 
         try:
@@ -192,7 +244,6 @@ async def api_action(req: UserAction):
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("SELECT uid, balance FROM users ORDER BY balance DESC LIMIT 10")
         top = c.fetchall(); conn.close()
-        # ИСПРАВЛЕНИЕ: Округляем баланс до 2 знаков, чтобы убрать хвосты (13.269999...)
         return {"success": True, "top": [{"id": u, "bal": round(b, 2)} for u, b in top]}
 
 @app.get("/api/balance/{user_id}")
@@ -209,7 +260,7 @@ async def payment_ok(message: Message):
         update_balance(message.from_user.id, amount)
         await message.answer(f"✅ Оплата прошла! +{amount} Алмазов.")
 
-# ===== РАКЕТКА (НОВАЯ МАТЕМАТИКА) =====
+# ===== РАКЕТКА =====
 active_bets, player_names = {}, {}
 crash_mult, crash_running = 1.0, False
 clients, game_state = set(), "waiting"
@@ -229,19 +280,13 @@ async def game_loop():
             
         if not active_bets: continue
         
-        # --- ГЕНЕРАТОР ТОЧКИ КРАША (СЛИВ) ---
+        # МАТЕМАТИКА СЛИВА (45% - краш на 1.0-1.2)
         roll = random.uniform(0, 100)
-        if roll < 45:
-            crash_target = random.uniform(1.00, 1.20) # 45% - Мгновенный краш
-        elif roll < 65:
-            crash_target = random.uniform(1.20, 1.50) # 20% - Небольшой краш
-        elif roll < 95:
-            crash_target = random.uniform(1.50, 5.00) # 30% - Средний икс
-        elif roll < 99.5:
-            crash_target = random.uniform(5.00, 20.00) # 4.5% - Высокий икс
-        else:
-            crash_target = random.uniform(20.00, 150.00) # 0.5% - Джекпот
-        # ------------------------------------
+        if roll < 45: crash_target = random.uniform(1.00, 1.20) 
+        elif roll < 65: crash_target = random.uniform(1.20, 1.50) 
+        elif roll < 95: crash_target = random.uniform(1.50, 5.00) 
+        elif roll < 99.5: crash_target = random.uniform(5.00, 20.00) 
+        else: crash_target = random.uniform(20.00, 150.00) 
             
         game_state = "flying"; crash_running = True
         await broadcast({"type": "start"})
@@ -249,8 +294,6 @@ async def game_loop():
         while crash_running:
             await asyncio.sleep(0.1)
             crash_mult += 0.015 * crash_mult
-            
-            # Проверяем, не достигли ли мы точки краша
             if crash_mult >= crash_target:
                 crash_running = False
             else:
