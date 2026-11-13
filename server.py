@@ -47,8 +47,8 @@ def get_user(uid):
     c.execute("SELECT balance, last_bonus FROM users WHERE uid=?", (str(uid),))
     row = c.fetchone()
     if not row:
-        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 0.10))
-        conn.commit(); balance = 0.10; last_bonus = 0
+        c.execute("INSERT INTO users (uid, balance) VALUES (?, ?)", (str(uid), 0.00))
+        conn.commit(); balance = 0.00; last_bonus = 0
     else: balance, last_bonus = row
     conn.close(); return {"balance": balance, "last_bonus": last_bonus}
 
@@ -401,12 +401,27 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
 async def cmd_start(message: Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
+    
     if len(args) > 1 and args[1].startswith("ref"):
         ref_id = args[1].replace("ref", "")
-        if ref_id != user_id:
-            update_balance(ref_id, 1.0)
-            try: await bot.send_message(ref_id, f"🎉 По твоей ссылке зашел друг! +1.00 💎")
-            except: pass
+        # Защита от накрутки:
+        # 1. Нельзя переходить по своей ссылке
+        # 2. Награда только если юзер НОВЫЙ (нет в базе до этого)
+        if ref_id != user_id and ref_id.isdigit():
+            conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+            c.execute("SELECT uid FROM users WHERE uid=?", (user_id,))
+            already_exists = c.fetchone() is not None
+            conn.close()
+            
+            if not already_exists:
+                # Юзер новый — создаём запись и начисляем рефереру
+                conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+                c.execute("INSERT OR IGNORE INTO users (uid, balance) VALUES (?, ?)", (user_id, 0.10))
+                conn.commit(); conn.close()
+                update_balance(ref_id, 0.005)
+                try:
+                    await bot.send_message(ref_id, "🎉 По твоей ссылке зашёл новый игрок! +0.005 💎")
+                except: pass
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 Играть", web_app=WebAppInfo(url=WEB_APP_URL))],
