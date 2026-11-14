@@ -124,32 +124,27 @@
         .btn-cancel-lot { background: #ef4444; color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
 
         /* === АПГРЕЙД: КРУГ И СТРЕЛКА === */
-.upgrade-area { background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; padding: 15px; border: 1px solid #1f2926; margin-bottom: 15px; position: relative; overflow: visible; }
-.upgrade-wheel-container { position: relative; width: 100%; max-width: 240px; margin: 0 auto 15px; aspect-ratio: 1; }
-
-/* Круг */
-.upgrade-wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#1f2926 0deg 360deg); box-shadow: 0 0 30px rgba(239,68,68,0.2), inset 0 0 40px rgba(0,0,0,0.6); position: relative; border: 3px solid #1f2926; }
-.upgrade-wheel::after { content: ''; position: absolute; top: 50%; left: 50%; width: 65%; height: 65%; background: #0d1112; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #1f2926; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
-
-/* Текст в центре (сдвинут вниз, чтобы стрелка не перекрывала) */
-.upgrade-wheel-text { position: absolute; top: 68%; left: 50%; transform: translate(-50%, -50%); z-index: 5; text-align: center; pointer-events: none; width: 100%; }
-.upgrade-wheel-text .wt-chance { font-size: 24px; font-weight: 900; color: #34d399; font-family: monospace; text-shadow: 0 0 15px rgba(52,211,153,0.6); line-height: 1; }
-.upgrade-wheel-text .wt-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-top: 2px; }
-
-/* Стрелка */
-.upgrade-arrow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; transition: transform 4s cubic-bezier(0.15, 0.8, 0.2, 1); }
-.upgrade-arrow-needle { position: absolute; top: 50%; left: 50%; width: 4px; height: 42%; background: linear-gradient(to top, rgba(250,204,21,0.8) 0%, #facc15 100%); transform-origin: bottom center; transform: translate(-50%, -100%); border-radius: 2px; box-shadow: 0 0 10px rgba(250,204,21,0.8), 0 0 20px rgba(250,204,21,0.4); }
-.upgrade-arrow-needle::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 12px solid #facc15; filter: drop-shadow(0 0 6px rgba(250,204,21,0.9)); }
-
-/* Убрали upgrade-arrow-center, чтобы не закрывал текст */
+        .upgrade-area { background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; padding: 15px; border: 1px solid #1f2926; margin-bottom: 15px; position: relative; overflow: visible; display: flex; flex-direction: column; align-items: center; }
+        .upgrade-wheel-container { position: relative; width: 100%; max-width: 240px; margin: 0 auto 15px; aspect-ratio: 1; }
         
-        .upgrade-slots { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .upgrade-wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#1f2926 0deg 360deg); box-shadow: 0 0 30px rgba(239,68,68,0.2), inset 0 0 40px rgba(0,0,0,0.6); position: relative; border: 3px solid #1f2926; }
+        .upgrade-wheel::after { content: ''; position: absolute; top: 50%; left: 50%; width: 65%; height: 65%; background: #0d1112; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #1f2926; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        
+        .upgrade-wheel-text { position: absolute; top: 68%; left: 50%; transform: translate(-50%, -50%); z-index: 15; text-align: center; pointer-events: none; width: 100%; }
+        .upgrade-wheel-text .wt-chance { font-size: 24px; font-weight: 900; color: #34d399; font-family: monospace; text-shadow: 0 0 15px rgba(52,211,153,0.6); line-height: 1; }
+        .upgrade-wheel-text .wt-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-top: 2px; }
+        
+        .upgrade-arrow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; transition: transform 4s cubic-bezier(0.15, 0.8, 0.2, 1); }
+        .upgrade-arrow-needle { position: absolute; top: 50%; left: 50%; width: 4px; height: 42%; background: linear-gradient(to top, rgba(250,204,21,0.8) 0%, #facc15 100%); transform-origin: bottom center; transform: translate(-50%, -100%); border-radius: 2px; box-shadow: 0 0 10px rgba(250,204,21,0.8), 0 0 20px rgba(250,204,21,0.4); }
+        .upgrade-arrow-needle::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 12px solid #facc15; filter: drop-shadow(0 0 6px rgba(250,204,21,0.9)); }
+        
+        .upgrade-slots { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; width: 100%; }
         .upgrade-slot { flex: 1; background: #121618; border: 1px dashed #1f2926; border-radius: 12px; padding: 12px 8px; text-align: center; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
         .upgrade-slot .slot-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
         .upgrade-slot .slot-icon { font-size: 26px; margin-bottom: 4px; }
         .upgrade-slot .slot-item { font-size: 12px; font-weight: 900; color: #34d399; }
         .upgrade-arrow { font-size: 20px; color: #facc15; flex-shrink: 0; }
-        .upgrade-chance { text-align: center; font-size: 16px; font-weight: 900; color: #facc15; margin-bottom: 15px; font-family: monospace; }
+        .upgrade-chance { text-align: center; font-size: 16px; font-weight: 900; color: #facc15; margin-bottom: 15px; font-family: monospace; width: 100%; }
 
         .duel-card { background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; padding: 14px; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .duel-card .duel-info { flex: 1; }
@@ -271,16 +266,13 @@
         <div class="info-text" style="text-align:center; margin-bottom:15px;">Апгрейд подарков — рискни и получи дороже!</div>
         <div class="upgrade-area">
             <div class="upgrade-wheel-container">
-                <div class="upgrade-wheel" id="upgrade-wheel">
-                    <div class="upgrade-wheel-text">
-                        <div class="wt-chance" id="wheel-chance">—</div>
-                        <div class="wt-label">Шанс</div>
-                    </div>
-                </div>
+                <div class="upgrade-wheel" id="upgrade-wheel"></div>
                 <div class="upgrade-arrow-container" id="upgrade-arrow">
-                <div class="upgrade-arrow-needle"></div>
+                    <div class="upgrade-arrow-needle"></div>
                 </div>
-                    <div class="upgrade-arrow-center"></div>
+                <div class="upgrade-wheel-text">
+                    <div class="wt-chance" id="wheel-chance">—</div>
+                    <div class="wt-label">Шанс</div>
                 </div>
             </div>
             <div class="upgrade-slots">
@@ -382,8 +374,8 @@
             <div class="stat-tile"><div class="stat-label">Проиграно</div><div class="stat-value danger" id="stat-lost">0.00</div></div>
             <div class="stat-tile"><div class="stat-label">Лучший краш</div><div class="stat-value warn" id="stat-crash">x0.00</div></div>
             <div class="stat-tile"><div class="stat-label">Инвентарь</div><div class="stat-value" id="stat-inv">0 💎</div></div>
-                    </div>
-                            <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 10)" step="0.1">
+        </div>
+        <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 10)" step="0.1">
         <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="requestWithdraw()">💸 Вывести</button>
         <input type="text" id="promo-code" class="promo-input" placeholder="ПРОМОКОД">
         <button class="btn" style="margin-bottom: 15px;" onclick="activatePromo()">АКТИВИРОВАТЬ</button>
@@ -737,50 +729,47 @@
             updateUpgradeUI();
         }
 
-    function updateUpgradeUI() {
-      const btn = document.getElementById('btn-upgrade');
-      const chanceEl = document.getElementById('upg-chance');
-      const wheelChance = document.getElementById('wheel-chance');
-      const wheel = document.getElementById('upgrade-wheel');
-      const arrow = document.getElementById('upgrade-arrow');
-    
-     if (!upgSelectedItem || !upgSelectedTarget) {
-        chanceEl.innerText = 'Шанс: —';
-        wheelChance.innerText = '—';
-        wheel.style.background = 'conic-gradient(#1f2926 0deg 360deg)';
-        if (arrow) { arrow.style.transition = 'none'; arrow.style.transform = 'rotate(0deg)'; }
-        btn.disabled = true;
-        return;
-    }
-    const sel = document.getElementById('upg-target-select');
-    const opt = sel.options[sel.selectedIndex];
-    const targetPrice = parseFloat(opt.dataset.price);
-    
-    const ratio = upgSelectedItem.price / targetPrice;
-    let multiplier;
-    if (targetPrice < 5) multiplier = 0.90;
-    else if (targetPrice < 50) multiplier = 0.70;
-    else if (targetPrice < 250) multiplier = 0.50;
-    else multiplier = 0.30;
-    
-    let chance = ratio * multiplier * 100;
-    chance = Math.max(3, Math.min(80, chance));
-    
-    const displayChance = Math.min(85, Math.round(chance));
-    chanceEl.innerText = `Шанс: ~${displayChance}%`;
-    wheelChance.innerText = `${displayChance}%`;
-    
-    // 🎨 Зелёный сектор начинается сверху (12 часов) и идёт ПО ЧАСОВОЙ СТРЕЛКЕ
-    // В CSS conic-gradient: 0deg = 12 часов, идёт по часовой
-    const greenDeg = (displayChance / 100) * 360;
-    wheel.style.background = `conic-gradient(#10b981 0deg ${greenDeg}deg, #ef4444 ${greenDeg}deg 360deg)`;
-    
-    // Сброс стрелки (она указывает вверх = 12 часов = зелёный при 0°)
-    if (arrow) {
-        arrow.style.transition = 'none';
-        arrow.style.transform = 'rotate(0deg)';
-    }
-    btn.disabled = false;
+        function updateUpgradeUI() {
+            const btn = document.getElementById('btn-upgrade');
+            const chanceEl = document.getElementById('upg-chance');
+            const wheelChance = document.getElementById('wheel-chance');
+            const wheel = document.getElementById('upgrade-wheel');
+            const arrow = document.getElementById('upgrade-arrow');
+            
+            if (!upgSelectedItem || !upgSelectedTarget) {
+                chanceEl.innerText = 'Шанс: —';
+                wheelChance.innerText = '—';
+                wheel.style.background = 'conic-gradient(#1f2926 0deg 360deg)';
+                if (arrow) { arrow.style.transition = 'none'; arrow.style.transform = 'rotate(0deg)'; }
+                btn.disabled = true;
+                return;
+            }
+            const sel = document.getElementById('upg-target-select');
+            const opt = sel.options[sel.selectedIndex];
+            const targetPrice = parseFloat(opt.dataset.price);
+            
+            const ratio = upgSelectedItem.price / targetPrice;
+            let multiplier;
+            if (targetPrice < 5) multiplier = 0.90;
+            else if (targetPrice < 50) multiplier = 0.70;
+            else if (targetPrice < 250) multiplier = 0.50;
+            else multiplier = 0.30;
+            
+            let chance = ratio * multiplier * 100;
+            chance = Math.max(3, Math.min(80, chance));
+            
+            const displayChance = Math.min(85, Math.round(chance));
+            chanceEl.innerText = `Шанс: ~${displayChance}%`;
+            wheelChance.innerText = `${displayChance}%`;
+            
+            const greenDeg = (displayChance / 100) * 360;
+            wheel.style.background = `conic-gradient(#10b981 0deg ${greenDeg}deg, #ef4444 ${greenDeg}deg 360deg)`;
+            
+            if (arrow) {
+                arrow.style.transition = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+            btn.disabled = false;
         }
 
         async function upgradeStart() {
@@ -801,25 +790,16 @@
             
             const chanceDeg = (res.chance / 100) * 360;
             const spins = 5 * 360;
-            // 🎯 Синхронизация со стрелкой:
-// Стрелка стоит вверх (12 часов = 0° в CSS = 0° conic).
-// Если стрелка повёрнута на X°, она указывает на угол X° по часовой от 12.
-// Зелёный сектор: 0° до chanceDeg
-// Красный сектор: chanceDeg до 360°
-const chanceDeg = (res.chance / 100) * 360;
-const spins = 5 * 360;
-let finalRotation;
-
-if (res.result === "win") {
-    // Стрелка должна указать в зелёный (0...chanceDeg)
-    const margin = chanceDeg * 0.1;
-    finalRotation = spins + margin + Math.random() * (chanceDeg - 2 * margin);
-} else {
-    // Стрелка должна указать в красный (chanceDeg...360)
-    const redSize = 360 - chanceDeg;
-    const margin = redSize * 0.1;
-    finalRotation = spins + chanceDeg + margin + Math.random() * (redSize - 2 * margin);
-}
+            let finalRotation;
+            
+            if (res.result === "win") {
+                const margin = chanceDeg * 0.1;
+                finalRotation = spins + margin + Math.random() * (chanceDeg - 2 * margin);
+            } else {
+                const redSize = 360 - chanceDeg;
+                const margin = redSize * 0.1;
+                finalRotation = spins + chanceDeg + margin + Math.random() * (redSize - 2 * margin);
+            }
             
             arrow.style.transition = 'transform 4s cubic-bezier(0.15, 0.8, 0.2, 1)';
             arrow.style.transform = `rotate(${finalRotation}deg)`;
@@ -1128,4 +1108,4 @@ if (res.result === "win") {
         setInterval(loadFeed, 30000);
     </script>
 </body>
-</html>
+    </html>
