@@ -50,7 +50,6 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, amount REAL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT, item_name TEXT, item_price REAL, date TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS market (id INTEGER PRIMARY KEY AUTOINCREMENT, seller_id TEXT, item_name TEXT, item_price REAL, price REAL, status TEXT DEFAULT 'active', created_at INTEGER)''')
-    # ДУЭЛИ ТЕПЕРЬ НА АЛМАЗЫ
     c.execute('''CREATE TABLE IF NOT EXISTS duels (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         creator_id TEXT,
@@ -62,6 +61,9 @@ def init_db():
     )''')
     c.execute('''CREATE TABLE IF NOT EXISTS stats (uid TEXT PRIMARY KEY, total_bets INTEGER DEFAULT 0, total_won REAL DEFAULT 0, total_lost REAL DEFAULT 0, best_crash REAL DEFAULT 0, favorite_game TEXT DEFAULT 'none')''')
     c.execute('''CREATE TABLE IF NOT EXISTS feed (id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT, name TEXT, action TEXT, details TEXT, timestamp INTEGER)''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_market_status ON market(status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_market_seller ON market(seller_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_feed_id ON feed(id)")
     conn.commit(); conn.close()
 
 init_db()
@@ -363,57 +365,45 @@ async def api_action(req: UserAction):
         del mine_sessions[req.user_id]
         return {"success": True, "msg": f"💰 Забрал {win} 💎 (x{sess['mult']})", "win": win}
 
-    # ===== АПГРЕЙД (новая математика) =====
-elif req.action == "upgrade_start":
-    conn = sqlite3.connect(DB_PATH); c = conn.cursor()
-    c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
-    row = c.fetchone()
-    if not row:
-        conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
-    src_name, src_price = row
-    target = find_gift(req.target_item)
-    if not target:
-        conn.close(); return {"success": False, "msg": "❌ Цель не найдена"}
-    if target["price"] <= src_price:
-        conn.close(); return {"success": False, "msg": "❌ Цель должна быть дороже"}
-    
-    # Базовая формула: чем дороже цель относительно источника, тем ниже шанс
-    ratio = src_price / target["price"]  # 0.0 - 1.0
-    
-    # Штраф за дорогие подарки (защита экономики):
-    # - Дешёвые (<5💎): коэффициент 0.9 (более щедро)
-    # - Средние (5-50💎): 0.7
-    # - Дорогие (50-250💎): 0.5
-    # - Легендарные (>250💎): 0.3 (жёстко)
-    if target["price"] < 5:
-        multiplier = 0.90
-    elif target["price"] < 50:
-        multiplier = 0.70
-    elif target["price"] < 250:
-        multiplier = 0.50
-    else:
-        multiplier = 0.30
-    
-    real_chance = ratio * multiplier
-    real_chance = max(0.03, min(0.80, real_chance))  # от 3% до 80% максимум
-    
-    # Красивый отображаемый шанс (чуть выше реального, чтоб игрок верил)
-    display_chance = real_chance * 100
-    # Добавляем ±3% для живости, но не даём выйти за 2-85
-    display_chance = round(display_chance + random.uniform(-3, 3), 1)
-    display_chance = max(2, min(85, display_chance))
-    
-    c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
-    conn.commit(); conn.close()
-    
-    if random.random() < real_chance:
-        add_inv(req.user_id, target["name"], target["price"])
-        add_feed(req.user_id, "Игрок", "upgrade", f"апгрейднул {src_name} → {target['name']}!")
-        return {"success": True, "result": "win", "src": src_name, "target": target["name"], "chance": display_chance}
-    else:
-        return {"success": True, "result": "lose", "src": src_name, "target": target["name"], "chance": display_chance}
+    # ===== АПГРЕЙД (новая математика шансов) =====
+    elif req.action == "upgrade_start":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
+        src_name, src_price = row
+        target = find_gift(req.target_item)
+        if not target:
+            conn.close(); return {"success": False, "msg": "❌ Цель не найдена"}
+        if target["price"] <= src_price:
+            conn.close(); return {"success": False, "msg": "❌ Цель должна быть дороже"}
         
-    # ===== БИРЖА (без минимума!) =====
+        # Базовая формула: чем дороже цель, тем ниже шанс
+        ratio = src_price / target["price"]
+        if target["price"] < 5: multiplier = 0.90
+        elif target["price"] < 50: multiplier = 0.70
+        elif target["price"] < 250: multiplier = 0.50
+        else: multiplier = 0.30
+        
+        real_chance = ratio * multiplier
+        real_chance = max(0.03, min(0.80, real_chance))
+        
+        display_chance = real_chance * 100
+        display_chance = round(display_chance + random.uniform(-3, 3), 1)
+        display_chance = max(2, min(85, display_chance))
+        
+        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+        conn.commit(); conn.close()
+        
+        if random.random() < real_chance:
+            add_inv(req.user_id, target["name"], target["price"])
+            add_feed(req.user_id, "Игрок", "upgrade", f"апгрейднул {src_name} → {target['name']}!")
+            return {"success": True, "result": "win", "src": src_name, "target": target["name"], "chance": display_chance}
+        else:
+            return {"success": True, "result": "lose", "src": src_name, "target": target["name"], "chance": display_chance}
+
+    # ===== БИРЖА (без минимума) =====
     elif req.action == "market_list":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
@@ -440,7 +430,6 @@ elif req.action == "upgrade_start":
             conn.close(); return {"success": False, "msg": "❌ Нельзя купить свой лот"}
         if get_user(req.user_id)["balance"] < list_price:
             conn.close(); return {"success": False, "msg": f"❌ Нужно {list_price} 💎"}
-        # ЗАКРЫВАЕМ соединение ДО хелперов (фикс зависания!)
         c.execute("UPDATE market SET status='sold' WHERE id=?", (req.market_id,))
         conn.commit(); conn.close()
         update_balance(req.user_id, -list_price)
@@ -457,7 +446,6 @@ elif req.action == "upgrade_start":
             conn.close(); return {"success": False, "msg": "❌ Лот не найден"}
         name, orig_price = row
         c.execute("UPDATE market SET status='cancelled' WHERE id=?", (req.market_id,))
-        # ЗАКРЫВАЕМ соединение ДО add_inv (фикс зависания!)
         conn.commit(); conn.close()
         add_inv(req.user_id, name, orig_price)
         return {"success": True, "msg": "✅ Лот снят"}
@@ -480,7 +468,6 @@ elif req.action == "upgrade_start":
             return {"success": False, "msg": "❌ Мин. ставка 0.10 💎"}
         if get_user(req.user_id)["balance"] < stake:
             return {"success": False, "msg": "❌ Недостаточно средств"}
-        # Списываем сразу у создателя
         update_balance(req.user_id, -stake)
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("INSERT INTO duels (creator_id, stake, status, created_at) VALUES (?, ?, 'waiting', ?)",
@@ -499,13 +486,11 @@ elif req.action == "upgrade_start":
             conn.close(); return {"success": False, "msg": "❌ Нельзя играть с собой"}
         if get_user(req.user_id)["balance"] < stake:
             conn.close(); return {"success": False, "msg": f"❌ Нужно {stake} 💎"}
-        # Списываем у соперника и закрываем
         update_balance(req.user_id, -stake)
         if random.random() < 0.5:
             winner = creator_id
         else:
             winner = str(req.user_id)
-        # Победитель получает ВЕСЬ банк (2 ставки), минус 10% комиссия
         bank = stake * 2
         win_amount = round(bank * 0.9, 2)
         c.execute("UPDATE duels SET opponent_id=?, status='finished', winner_id=? WHERE id=?",
