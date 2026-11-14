@@ -123,18 +123,29 @@
         .btn-buy-lot { background: linear-gradient(135deg, #047857, #10b981); color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
         .btn-cancel-lot { background: #ef4444; color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
 
-        .upgrade-area { background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; padding: 20px; border: 1px solid #1f2926; margin-bottom: 15px; position: relative; overflow: hidden; }
-        .upgrade-slots { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
-        .upgrade-slot { flex: 1; background: #121618; border: 1px dashed #1f2926; border-radius: 12px; padding: 10px; text-align: center; min-height: 70px; display: flex; flex-direction: column; justify-content: center; }
-        .upgrade-slot .slot-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .upgrade-slot .slot-item { font-size: 13px; font-weight: 900; color: #34d399; }
-        .upgrade-arrow { font-size: 20px; color: #facc15; }
-        .upgrade-chance { text-align: center; font-size: 14px; font-weight: 900; color: #facc15; margin-bottom: 15px; font-family: monospace; }
+        /* === АПГРЕЙД: КРУГ === */
+        .upgrade-area { background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; padding: 15px; border: 1px solid #1f2926; margin-bottom: 15px; position: relative; overflow: visible; }
+        .upgrade-wheel-container { position: relative; width: 100%; max-width: 240px; margin: 0 auto 15px; aspect-ratio: 1; }
+        .upgrade-wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#1f2926 0deg 360deg); box-shadow: 0 0 30px rgba(239,68,68,0.2), inset 0 0 40px rgba(0,0,0,0.6); position: relative; border: 3px solid #1f2926; transition: transform 4s cubic-bezier(0.15, 0.8, 0.2, 1); }
+        .upgrade-wheel::after { content: ''; position: absolute; top: 50%; left: 50%; width: 60%; height: 60%; background: #0d1112; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #1f2926; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .upgrade-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 22px solid #facc15; z-index: 10; filter: drop-shadow(0 0 6px rgba(250,204,21,0.8)); }
+        .upgrade-wheel-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; text-align: center; pointer-events: none; }
+        .upgrade-wheel-text .wt-chance { font-size: 28px; font-weight: 900; color: #34d399; font-family: monospace; text-shadow: 0 0 15px rgba(52,211,153,0.6); }
+        .upgrade-wheel-text .wt-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-top: 2px; }
 
+        .upgrade-slots { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .upgrade-slot { flex: 1; background: #121618; border: 1px dashed #1f2926; border-radius: 12px; padding: 12px 8px; text-align: center; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+        .upgrade-slot .slot-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .upgrade-slot .slot-icon { font-size: 26px; margin-bottom: 4px; }
+        .upgrade-slot .slot-item { font-size: 12px; font-weight: 900; color: #34d399; }
+        .upgrade-arrow { font-size: 20px; color: #facc15; flex-shrink: 0; }
+        .upgrade-chance { text-align: center; font-size: 16px; font-weight: 900; color: #facc15; margin-bottom: 15px; font-family: monospace; }
+
+        /* === ДУЭЛИ (АЛМАЗЫ) === */
         .duel-card { background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; padding: 14px; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .duel-card .duel-info { flex: 1; }
-        .duel-card .duel-name { font-size: 13px; font-weight: 900; color: #fff; }
-        .duel-card .duel-price { font-size: 11px; color: #10b981; }
+        .duel-card .duel-name { font-size: 14px; font-weight: 900; color: #fff; }
+        .duel-card .duel-price { font-size: 12px; color: #10b981; font-weight: 700; margin-top: 2px; }
         .btn-duel-join { background: linear-gradient(135deg, #7c2d12, #f59e0b); color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
 
         .profile-hero { background: linear-gradient(135deg, #064e3b 0%, #0d1112 70%); border: 1px solid #10b981; border-radius: 20px; padding: 20px; margin-bottom: 15px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }
@@ -250,19 +261,30 @@
     <div id="tab-upgrade" class="tab-content">
         <div class="info-text" style="text-align:center; margin-bottom:15px;">Апгрейд подарков — рискни и получи дороже!</div>
         <div class="upgrade-area">
+            <div class="upgrade-wheel-container">
+                <div class="upgrade-pointer"></div>
+                <div class="upgrade-wheel" id="upgrade-wheel">
+                    <div class="upgrade-wheel-text">
+                        <div class="wt-chance" id="wheel-chance">—</div>
+                        <div class="wt-label">Шанс</div>
+                    </div>
+                </div>
+            </div>
             <div class="upgrade-slots">
                 <div class="upgrade-slot" id="upg-src">
                     <div class="slot-label">Твой</div>
-                    <div class="slot-item">—</div>
+                    <div class="slot-icon">—</div>
+                    <div class="slot-item">Не выбран</div>
                 </div>
                 <div class="upgrade-arrow">→</div>
                 <div class="upgrade-slot" id="upg-target">
                     <div class="slot-label">Цель</div>
-                    <div class="slot-item">—</div>
+                    <div class="slot-icon">—</div>
+                    <div class="slot-item">Не выбрана</div>
                 </div>
             </div>
             <div class="upgrade-chance" id="upg-chance">Шанс: —</div>
-            <button class="btn" id="btn-upgrade" onclick="upgradeStart()" disabled>АПГРЕЙД</button>
+            <button class="btn" id="btn-upgrade" onclick="upgradeStart()" disabled>🎰 АПГРЕЙД</button>
         </div>
         <div class="info-section">
             <div class="section-title">🎁 Твой инвентарь</div>
@@ -293,10 +315,11 @@
     </div>
 
     <div id="tab-duels" class="tab-content">
-        <div class="info-text" style="text-align:center; margin-bottom:15px;">Дуэли 1v1 — победитель забирает всё!</div>
+        <div class="info-text" style="text-align:center; margin-bottom:15px;">Дуэли 1v1 на алмазы — победитель забирает банк (минус 10% комиссия)!</div>
         <div class="info-section">
             <div class="section-title">⚔️ Создать дуэль</div>
-            <div id="duel-my-inv" style="display:grid; grid-template-columns: repeat(2,1fr); gap:8px;"></div>
+            <input type="number" id="duel-stake" class="promo-input" placeholder="СУММА СТАВКИ (от 0.10)" value="1.00" step="0.01">
+            <button class="btn" onclick="duelCreate()">СОЗДАТЬ ДУЭЛЬ</button>
         </div>
         <div class="info-section">
             <div class="section-title">🎯 Открытые дуэли</div>
@@ -375,6 +398,7 @@
             <div class="rule-row"><span class="rule-label">💣 Мины (поле)</span><span class="rule-value">5×5, 12 мин</span></div>
             <div class="rule-row"><span class="rule-label">📦 Продажа подарка</span><span class="rule-value">80% цены</span></div>
             <div class="rule-row"><span class="rule-label">🏦 Биржа (комиссия)</span><span class="rule-value">10%</span></div>
+            <div class="rule-row"><span class="rule-label">⚔️ Дуэли (комиссия)</span><span class="rule-value">10% от банка</span></div>
             <div class="rule-row"><span class="rule-label">🔗 Рефералка</span><span class="rule-value">+0.005 💎</span></div>
         </div>
         <div class="info-section">
@@ -427,7 +451,11 @@
             if(tab === 'inv') loadInventory();
             if(tab === 'shop') loadShop();
             if(tab === 'mines') renderMinesGrid();
-            if(tab === 'upgrade') loadUpgrade();
+            if(tab === 'upgrade') {
+                const w = document.getElementById('upgrade-wheel');
+                if (w) { w.style.transition = 'none'; w.style.transform = 'rotate(0deg)'; setTimeout(() => w.style.transition = 'transform 4s cubic-bezier(0.15,0.8,0.2,1)', 50); }
+                loadUpgrade();
+            }
             if(tab === 'market') loadMarket();
             if(tab === 'duels') loadDuels();
             if(tab === 'profile') loadProfile();
@@ -435,12 +463,19 @@
 
         async function apiAction(action, data = {}) {
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
                 const res = await fetch('/api/action', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: String(userId), action: action, ...data })
+                    body: JSON.stringify({ user_id: String(userId), action: action, ...data }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
                 return await res.json();
-            } catch (e) { return { success: false, msg: "Ошибка сети" }; }
+            } catch (e) {
+                console.error("API error:", e);
+                return { success: false, msg: "⏱ Таймаут сети. Попробуй ещё раз." };
+            }
         }
 
         async function openDaily() {
@@ -598,14 +633,16 @@
         async function loadFeed() {
             const res = await apiAction("feed_get");
             const el = document.getElementById('feed-ticker');
+            const ticker = el?.parentElement;
             if (res.success && res.feed.length > 0) {
+                if (ticker) ticker.style.display = 'flex';
                 let html = '';
                 res.feed.forEach(f => {
                     html += `<span>👤 Игрок</span> ${f.details} &nbsp;&nbsp;•&nbsp;&nbsp; `;
                 });
                 el.innerHTML = html;
             } else {
-                el.innerHTML = 'Пока нет новостей...';
+                if (ticker) ticker.style.display = 'none';
             }
         }
 
@@ -649,7 +686,10 @@
                     el.innerHTML = `<div style="font-size:20px;">${icon}</div><div style="font-weight:900;">${item.price} 💎</div>`;
                     el.onclick = () => {
                         upgSelectedItem = item;
-                        document.querySelector('#upg-src .slot-item').innerText = item.name;
+                        const icon2 = item.name.split(' ')[0];
+                        const name2 = item.name.substring(icon2.length).trim();
+                        document.querySelector('#upg-src .slot-icon').innerText = icon2;
+                        document.querySelector('#upg-src .slot-item').innerText = `${name2} (${item.price} 💎)`;
                         updateUpgradeUI();
                     };
                     invDiv.appendChild(el);
@@ -671,17 +711,31 @@
         function selectTarget() {
             const select = document.getElementById('upg-target-select');
             const val = select.value;
-            if (!val) { upgSelectedTarget = null; updateUpgradeUI(); return; }
+            if (!val) { 
+                upgSelectedTarget = null;
+                document.querySelector('#upg-target .slot-icon').innerText = '—';
+                document.querySelector('#upg-target .slot-item').innerText = 'Не выбрана';
+                updateUpgradeUI(); 
+                return; 
+            }
             upgSelectedTarget = val;
-            document.querySelector('#upg-target .slot-item').innerText = val;
+            const icon = val.split(' ')[0];
+            const name = val.substring(icon.length).trim();
+            document.querySelector('#upg-target .slot-icon').innerText = icon;
+            document.querySelector('#upg-target .slot-item').innerText = name;
             updateUpgradeUI();
         }
 
         function updateUpgradeUI() {
             const btn = document.getElementById('btn-upgrade');
             const chanceEl = document.getElementById('upg-chance');
+            const wheelChance = document.getElementById('wheel-chance');
+            const wheel = document.getElementById('upgrade-wheel');
+            
             if (!upgSelectedItem || !upgSelectedTarget) {
                 chanceEl.innerText = 'Шанс: —';
+                wheelChance.innerText = '—';
+                wheel.style.background = 'conic-gradient(#1f2926 0deg 360deg)';
                 btn.disabled = true;
                 return;
             }
@@ -690,34 +744,60 @@
             const targetPrice = parseFloat(opt.dataset.price);
             const chance = Math.min(85, Math.round((upgSelectedItem.price / targetPrice) * 100));
             chanceEl.innerText = `Шанс: ~${chance}%`;
+            wheelChance.innerText = `${chance}%`;
+            
+            const greenDeg = (chance / 100) * 360;
+            wheel.style.background = `conic-gradient(#10b981 0deg ${greenDeg}deg, #ef4444 ${greenDeg}deg 360deg)`;
             btn.disabled = false;
         }
 
         async function upgradeStart() {
             if (!upgSelectedItem || !upgSelectedTarget) return;
             const btn = document.getElementById('btn-upgrade');
-            btn.disabled = true; btn.innerText = "⏳";
+            const wheel = document.getElementById('upgrade-wheel');
+            btn.disabled = true; btn.innerText = "⏳ КРУТИМ...";
+            
             const targetName = upgSelectedTarget;
             const res = await apiAction("upgrade_start", { item_id: upgSelectedItem.id, target_item: targetName });
+            
             if (!res.success) {
                 showAlert(res.msg || "Ошибка");
-                btn.disabled = false; btn.innerText = "АПГРЕЙД";
+                btn.disabled = false; btn.innerText = "🎰 АПГРЕЙД";
                 return;
             }
+            
+            const spins = 5 * 360;
+            let finalRotation;
             if (res.result === "win") {
-                showAlert(`🎉 УСПЕХ! ${res.src} → ${res.target} (шанс ${res.chance}%)`);
+                finalRotation = spins + Math.random() * (res.chance / 100 * 360);
             } else {
-                showAlert(`💥 Провал! ${res.src} сгорел (шанс ${res.chance}%)`);
+                finalRotation = spins + (res.chance / 100 * 360) + Math.random() * ((1 - res.chance / 100) * 360);
             }
-            upgSelectedItem = null;
-            upgSelectedTarget = null;
-            document.querySelector('#upg-src .slot-item').innerText = '—';
-            document.querySelector('#upg-target .slot-item').innerText = '—';
-            document.getElementById('upg-target-select').value = '';
-            document.getElementById('upg-chance').innerText = 'Шанс: —';
-            btn.innerText = "АПГРЕЙД";
-            loadBalance();
-            loadUpgrade();
+            wheel.style.transform = `rotate(${finalRotation}deg)`;
+            
+            setTimeout(() => {
+                if (res.result === "win") {
+                    showAlert(`🎉 УСПЕХ! ${res.src} → ${res.target} (шанс ${res.chance}%)`);
+                } else {
+                    showAlert(`💥 Провал! ${res.src} сгорел (шанс ${res.chance}%)`);
+                }
+                upgSelectedItem = null;
+                upgSelectedTarget = null;
+                document.querySelector('#upg-src .slot-icon').innerText = '—';
+                document.querySelector('#upg-src .slot-item').innerText = 'Не выбран';
+                document.querySelector('#upg-target .slot-icon').innerText = '—';
+                document.querySelector('#upg-target .slot-item').innerText = 'Не выбрана';
+                document.getElementById('upg-target-select').value = '';
+                document.getElementById('upg-chance').innerText = 'Шанс: —';
+                document.getElementById('wheel-chance').innerText = '—';
+                wheel.style.transition = 'none';
+                wheel.style.transform = 'rotate(0deg)';
+                wheel.style.background = 'conic-gradient(#1f2926 0deg 360deg)';
+                setTimeout(() => wheel.style.transition = 'transform 4s cubic-bezier(0.15,0.8,0.2,1)', 50);
+                btn.innerText = "🎰 АПГРЕЙД";
+                loadBalance();
+                loadUpgrade();
+            }, 4200);
         }
 
         // ===== БИРЖА =====
@@ -762,7 +842,7 @@
                     el.innerHTML = `<div style="font-size:20px;">${icon}</div><div style="font-weight:900;">${item.price} 💎</div><button class="btn btn-secondary" style="padding:4px; margin-top:4px; font-size:10px; position:relative; z-index:5;">Продать</button>`;
                     el.querySelector('button').onclick = (e) => {
                         e.stopPropagation();
-                        const price = prompt(`Цена за ${item.name} (мин ${(item.price * 0.5).toFixed(2)}):`, (item.price).toFixed(2));
+                        const price = prompt(`Цена за ${item.name} (в 💎):`, (item.price).toFixed(2));
                         if (price) marketList(item.id, parseFloat(price));
                     };
                     myDiv.appendChild(el);
@@ -791,54 +871,35 @@
             if (res.success) loadMarket();
         }
 
-        // ===== ДУЭЛИ =====
+        // ===== ДУЭЛИ НА АЛМАЗЫ =====
         async function loadDuels() {
             const res = await apiAction("duel_list");
-            const invRes = await apiAction("get_inv");
             const listDiv = document.getElementById('duel-list');
             listDiv.innerHTML = '';
             if (res.success && res.duels.length > 0) {
                 res.duels.forEach(d => {
                     const el = document.createElement('div');
                     el.className = 'duel-card';
-                    el.innerHTML = `<div class="duel-info"><div class="duel-name">${d.item}</div><div class="duel-price">${d.price} 💎</div></div><button class="btn-duel-join">Вступить</button>`;
-                    el.querySelector('.btn-duel-join').onclick = () => joinDuel(d.id, invRes.inv);
+                    el.innerHTML = `<div class="duel-info"><div class="duel-name">⚔️ Дуэль на ${d.stake} 💎</div><div class="duel-price">Банк: ${(d.stake * 2 * 0.9).toFixed(2)} 💎 (с комиссией)</div></div><button class="btn-duel-join">Вступить</button>`;
+                    el.querySelector('.btn-duel-join').onclick = () => joinDuel(d.id);
                     listDiv.appendChild(el);
                 });
             } else {
-                listDiv.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px;">Открытых дуэлей нет</div>';
-            }
-            const myDiv = document.getElementById('duel-my-inv');
-            myDiv.innerHTML = '';
-            if (invRes.success && invRes.inv.length > 0) {
-                invRes.inv.forEach(item => {
-                    const el = document.createElement('div');
-                    el.className = 'case-card';
-                    el.style.padding = '10px';
-                    el.style.fontSize = '11px';
-                    const icon = item.name.split(' ')[0];
-                    el.innerHTML = `<div style="font-size:20px;">${icon}</div><div style="font-weight:900;">${item.price} 💎</div><button class="btn btn-secondary" style="padding:4px; margin-top:4px; font-size:10px; position:relative; z-index:5;">Создать</button>`;
-                    el.querySelector('button').onclick = (e) => {
-                        e.stopPropagation();
-                        duelCreate(item.id);
-                    };
-                    myDiv.appendChild(el);
-                });
-            } else {
-                myDiv.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; font-size:12px;">Инвентарь пуст</div>';
+                listDiv.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px;">Открытых дуэлей нет. Создай свою!</div>';
             }
         }
 
-        async function duelCreate(itemId) {
-            const res = await apiAction("duel_create", { item_id: itemId });
+        async function duelCreate() {
+            const stake = parseFloat(document.getElementById('duel-stake').value);
+            if (!stake || stake < 0.10) return showAlert("Мин. ставка 0.10 💎");
+            if (currentBalance < stake) return showAlert("Мало денег!");
+            const res = await apiAction("duel_create", { amount: stake });
             showAlert(res.msg);
-            if (res.success) loadDuels();
+            if (res.success) { loadBalance(); loadDuels(); }
         }
 
-        async function joinDuel(duelId, myInv) {
-            if (!myInv || myInv.length === 0) return showAlert("Инвентарь пуст");
-            const itemId = myInv[0].id;
-            const res = await apiAction("duel_join", { duel_id: duelId, item_id: itemId });
+        async function joinDuel(duelId) {
+            const res = await apiAction("duel_join", { duel_id: duelId });
             showAlert(res.msg);
             if (res.success) { loadBalance(); loadDuels(); }
         }
@@ -927,10 +988,12 @@
 
         // ===== РАКЕТКА =====
         let isBetPlaced = false, gameState = "waiting", currentMult = 1.0;
+        let wsReconnectDelay = 1000;
 
         function connectWS() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             ws = new WebSocket(`${protocol}//${window.location.host}/ws/${userId}`);
+            ws.onopen = () => { wsReconnectDelay = 1000; };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 const elMult = document.getElementById('crash-multiplier');
@@ -988,7 +1051,12 @@
                     histBar.prepend(newItem); if (histBar.children.length > 15) histBar.lastChild.remove();
                 }
             };
-            ws.onclose = () => setTimeout(connectWS, 3000);
+            ws.onclose = () => {
+                console.log(`WS reconnect in ${wsReconnectDelay}ms`);
+                setTimeout(connectWS, wsReconnectDelay);
+                wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30000);
+            };
+            ws.onerror = (e) => console.error("WS error:", e);
         }
 
         function placeBet() {
