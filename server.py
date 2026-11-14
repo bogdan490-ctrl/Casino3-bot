@@ -235,16 +235,16 @@ async def api_action(req: UserAction):
 
     elif req.action == "withdraw":
         balance = get_user(req.user_id)["balance"]
-        if balance >= req.amount >= 300.0:
+        if balance >= req.amount >= 500.0:
             update_balance(req.user_id, -req.amount)
-            stars = int(req.amount * 15)
+            stars = int(req.amount * 50)
             kb = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"appr_{req.user_id}_{req.amount}_{stars}"),
                  InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decl_{req.user_id}_{req.amount}")]
             ])
             await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nID: <code>{req.user_id}</code>\nСумма: {req.amount} 💎\nВыдать: {stars} ⭐", reply_markup=kb)
             return {"success": True, "msg": f"✅ Заявка на {req.amount} 💎 создана. Ожидайте."}
-        return {"success": False, "msg": "❌ Минимум 300 💎"}
+        return {"success": False, "msg": "❌ Минимум 500 💎"}
 
     elif req.action == "open_case":
         prices = {"bronze": 2.0, "silver": 5.0, "gold": 10.0, "diamond": 20.0}
@@ -625,9 +625,9 @@ async def cmd_start(message: Message):
                 conn = sqlite3.connect(DB_PATH); c = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO users (uid, balance) VALUES (?, ?)", (user_id, 0.10))
                 conn.commit(); conn.close()
-                update_balance(ref_id, 0.005)
+                update_balance(ref_id, 0.05)
                 try:
-                    await bot.send_message(ref_id, "🎉 По твоей ссылке зашёл новый игрок! +0.005 💎")
+                    await bot.send_message(ref_id, "🎉 По твоей ссылке зашёл новый игрок! +0.05 💎")
                 except: pass
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 Играть", web_app=WebAppInfo(url=WEB_APP_URL))],
