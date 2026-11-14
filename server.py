@@ -235,16 +235,16 @@ async def api_action(req: UserAction):
 
     elif req.action == "withdraw":
         balance = get_user(req.user_id)["balance"]
-        if balance >= req.amount >= 10.0:
+        if balance >= req.amount >= 300.0:
             update_balance(req.user_id, -req.amount)
-            stars = int(req.amount * 10)
+            stars = int(req.amount * 15)
             kb = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"appr_{req.user_id}_{req.amount}_{stars}"),
                  InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decl_{req.user_id}_{req.amount}")]
             ])
             await bot.send_message(ADMIN_ID, f"💸 <b>ЗАЯВКА НА ВЫВОД</b>\nID: <code>{req.user_id}</code>\nСумма: {req.amount} 💎\nВыдать: {stars} ⭐", reply_markup=kb)
             return {"success": True, "msg": f"✅ Заявка на {req.amount} 💎 создана. Ожидайте."}
-        return {"success": False, "msg": "❌ Минимум 10 💎"}
+        return {"success": False, "msg": "❌ Минимум 300 💎"}
 
     elif req.action == "open_case":
         prices = {"bronze": 2.0, "silver": 5.0, "gold": 10.0, "diamond": 20.0}
