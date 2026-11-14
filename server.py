@@ -34,12 +34,18 @@ class SupportState(StatesGroup):
 
 # ===== БАЗА =====
 DB_PATH = "casino.db"
+
 def init_db():
     conn = sqlite3.connect(DB_PATH); c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (uid TEXT PRIMARY KEY, balance REAL, last_bonus INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, amount REAL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT, item_name TEXT, item_price REAL, date TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS market (id INTEGER PRIMARY KEY AUTOINCREMENT, seller_id TEXT, item_name TEXT, item_price REAL, price REAL, status TEXT DEFAULT 'active', created_at INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS duels (id INTEGER PRIMARY KEY AUTOINCREMENT, creator_id TEXT, creator_item TEXT, creator_price REAL, opponent_id TEXT, opponent_item TEXT, opponent_price REAL, status TEXT DEFAULT 'waiting', winner_id TEXT, created_at INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS stats (uid TEXT PRIMARY KEY, total_bets INTEGER DEFAULT 0, total_won REAL DEFAULT 0, total_lost REAL DEFAULT 0, best_crash REAL DEFAULT 0, favorite_game TEXT DEFAULT 'none')''')
+    c.execute('''CREATE TABLE IF NOT EXISTS feed (id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT, name TEXT, action TEXT, details TEXT, timestamp INTEGER)''')
     conn.commit(); conn.close()
+
 init_db()
 
 def get_user(uid):
@@ -66,6 +72,37 @@ def get_inv(uid):
     conn = sqlite3.connect(DB_PATH); c = conn.cursor()
     c.execute("SELECT id, item_name, item_price FROM inventory WHERE uid=?", (str(uid),))
     rows = c.fetchall(); conn.close(); return rows
+
+def add_feed(uid, name, action, details):
+    conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+    c.execute("INSERT INTO feed (uid, name, action, details, timestamp) VALUES (?,?,?,?,?)",
+              (str(uid), name, action, details, int(time.time())))
+    c.execute("DELETE FROM feed WHERE id NOT IN (SELECT id FROM feed ORDER BY id DESC LIMIT 30)")
+    conn.commit(); conn.close()
+
+def get_stats(uid):
+    conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+    c.execute("SELECT total_bets, total_won, total_lost, best_crash, favorite_game FROM stats WHERE uid=?", (str(uid),))
+    row = c.fetchone()
+    if not row:
+        c.execute("INSERT INTO stats (uid) VALUES (?)", (str(uid),))
+        conn.commit(); conn.close()
+        return {"total_bets": 0, "total_won": 0, "total_lost": 0, "best_crash": 0, "favorite_game": "none"}
+    conn.close()
+    return {"total_bets": row[0], "total_won": row[1], "total_lost": row[2], "best_crash": row[3], "favorite_game": row[4]}
+
+def update_stat(uid, field, value, mode="set"):
+    ALLOWED = {"total_bets", "total_won", "total_lost", "best_crash", "favorite_game"}
+    if field not in ALLOWED: return
+    conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+    c.execute("INSERT OR IGNORE INTO stats (uid) VALUES (?)", (str(uid),))
+    if mode == "inc":
+        c.execute(f"UPDATE stats SET {field} = {field} + ? WHERE uid=?", (value, str(uid)))
+    elif mode == "max":
+        c.execute(f"UPDATE stats SET {field} = MAX({field}, ?) WHERE uid=?", (value, str(uid)))
+    else:
+        c.execute(f"UPDATE stats SET {field} = ? WHERE uid=?", (value, str(uid)))
+    conn.commit(); conn.close()
 
 # ===== БАЗА ПОДАРКОВ =====
 GIFTS = {
@@ -97,6 +134,12 @@ GIFTS = {
     ]
 }
 
+def find_gift(name):
+    for cat in GIFTS.values():
+        for g in cat:
+            if g["name"] == name: return g
+    return None
+
 def open_case_logic(case_id):
     if case_id == "bronze":
         roll = random.uniform(0, 100)
@@ -125,7 +168,7 @@ def open_case_logic(case_id):
     return random.choice(GIFTS[cat])
 
 # ===== АКТИВНЫЕ СЕССИИ МИН =====
-mine_sessions = {}  # uid -> {"bet": float, "mines": set[int], "opened": set[int], "field": int, "mult": float}
+mine_sessions = {}
 
 # ===== API =====
 class UserAction(BaseModel):
@@ -136,6 +179,9 @@ class UserAction(BaseModel):
     amount: float = 0.0
     item_id: int = -1
     cell: int = -1
+    target_item: str = ""
+    market_id: int = -1
+    duel_id: int = -1
 
 @app.post("/api/action")
 async def api_action(req: UserAction):
@@ -160,13 +206,9 @@ async def api_action(req: UserAction):
             conn = sqlite3.connect(DB_PATH); c = conn.cursor()
             c.execute("UPDATE users SET last_bonus=? WHERE uid=?", (now, str(req.user_id)))
             conn.commit(); conn.close()
-            
-            if random.random() < 0.01:
-                item = random.choice(GIFTS["legendary"])
-            elif random.random() < 0.1:
-                item = random.choice(GIFTS["rare"])
-            else:
-                item = random.choice(GIFTS["common"])
+            if random.random() < 0.01: item = random.choice(GIFTS["legendary"])
+            elif random.random() < 0.1: item = random.choice(GIFTS["rare"])
+            else: item = random.choice(GIFTS["common"])
             add_inv(req.user_id, item["name"], item["price"])
             return {"success": True, "item": item["name"], "price": item["price"], "msg": f"🎁 Выпало: {item['name']}"}
         return {"success": False, "msg": "❌ Приходи завтра!"}
@@ -175,7 +217,7 @@ async def api_action(req: UserAction):
         balance = get_user(req.user_id)["balance"]
         if balance >= req.amount >= 10.0:
             update_balance(req.user_id, -req.amount)
-            stars = int(req.amount * 10) 
+            stars = int(req.amount * 10)
             kb = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="✅ Подтвердить", callback_data=f"appr_{req.user_id}_{req.amount}_{stars}"),
                  InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decl_{req.user_id}_{req.amount}")]
@@ -187,12 +229,13 @@ async def api_action(req: UserAction):
     elif req.action == "open_case":
         prices = {"bronze": 2.0, "silver": 5.0, "gold": 10.0, "diamond": 20.0}
         price = prices.get(req.case_id, 2.0)
-        balance = get_user(req.user_id)["balance"]
-        if balance < price: return {"success": False, "msg": "Недостаточно средств"}
-        
+        if get_user(req.user_id)["balance"] < price:
+            return {"success": False, "msg": "Недостаточно средств"}
         update_balance(req.user_id, -price)
         item = open_case_logic(req.case_id)
         add_inv(req.user_id, item["name"], item["price"])
+        update_stat(req.user_id, "total_bets", 1, "inc")
+        add_feed(req.user_id, "Игрок", "case", f"открыл кейс → {item['name']}")
         return {"success": True, "item": item["name"], "price": item["price"], "new_balance": get_user(req.user_id)["balance"]}
 
     elif req.action == "sell_item":
@@ -228,28 +271,21 @@ async def api_action(req: UserAction):
         return {"success": True, "shop": GIFTS}
 
     elif req.action == "buy_shop":
-        # Цена ТОЛЬКО с сервера — защита от подмены
-        real_item = None
-        for cat in GIFTS.values():
-            for g in cat:
-                if g["name"] == req.code:
-                    real_item = g; break
-            if real_item: break
+        real_item = find_gift(req.code)
         if not real_item:
             return {"success": False, "msg": "❌ Товар не найден"}
         price = real_item["price"]
-        balance = get_user(req.user_id)["balance"]
-        if balance < price:
+        if get_user(req.user_id)["balance"] < price:
             return {"success": False, "msg": f"❌ Недостаточно средств (нужно {price} 💎)"}
         update_balance(req.user_id, -price)
         add_inv(req.user_id, real_item["name"], real_item["price"])
         return {"success": True, "msg": f"✅ Куплено: {real_item['name']} за {price} 💎", "new_balance": get_user(req.user_id)["balance"]}
 
     elif req.action == "buy":
-        stars = int(req.amount * 100) 
+        stars = int(req.amount * 100)
         try:
             await bot.send_invoice(
-                chat_id=req.user_id, title=f"{req.amount} Алмазов", description="Покупка валюты", 
+                chat_id=req.user_id, title=f"{req.amount} Алмазов", description="Покупка валюты",
                 payload=f"buy_{req.amount}", currency="XTR", prices=[LabeledPrice(label="Алмазы", amount=stars)]
             )
             return {"success": True}
@@ -270,12 +306,9 @@ async def api_action(req: UserAction):
         if get_user(req.user_id)["balance"] < bet:
             return {"success": False, "msg": "❌ Недостаточно средств"}
         update_balance(req.user_id, -bet)
-        # Поле 5x5 = 25 клеток, 5 мин (мало шансов на джекпот)
         all_cells = list(range(25))
         mines = set(random.sample(all_cells, 12))
-        mine_sessions[req.user_id] = {
-            "bet": bet, "mines": mines, "opened": set(), "mult": 1.0
-        }
+        mine_sessions[req.user_id] = {"bet": bet, "mines": mines, "opened": set(), "mult": 1.0}
         return {"success": True, "msg": "💣 Игра началась! Открывай клетки."}
 
     elif req.action == "mines_open":
@@ -287,19 +320,15 @@ async def api_action(req: UserAction):
             return {"success": False, "msg": "❌ Неверная клетка"}
         if cell in sess["opened"]:
             return {"success": False, "msg": "❌ Уже открыта"}
-
         if cell in sess["mines"]:
-            # Проиграл
             lost = sess["bet"]
             del mine_sessions[req.user_id]
+            update_stat(req.user_id, "total_lost", lost, "inc")
+            update_stat(req.user_id, "favorite_game", "mines")
             return {"success": True, "result": "boom", "cell": cell, "lost": lost,
-                    "mines": list(sess["mines"]) if False else None,
                     "msg": f"💥 БУМ! Ты потерял {lost} 💎"}
-
-        # Открыл безопасную
         sess["opened"].add(cell)
         n = len(sess["opened"])
-        # Множитель: чем больше открыл, тем выше
         sess["mult"] = round(1.0 + (n * 0.3) + (n * n * 0.05), 2)
         return {"success": True, "result": "safe", "cell": cell, "mult": sess["mult"],
                 "opened": list(sess["opened"]), "msg": f"✅ Безопасно! x{sess['mult']}"}
@@ -310,8 +339,157 @@ async def api_action(req: UserAction):
             return {"success": False, "msg": "❌ Нечего забирать"}
         win = round(sess["bet"] * sess["mult"], 2)
         update_balance(req.user_id, win)
+        update_stat(req.user_id, "total_won", win, "inc")
+        update_stat(req.user_id, "total_bets", 1, "inc")
+        update_stat(req.user_id, "favorite_game", "mines")
         del mine_sessions[req.user_id]
         return {"success": True, "msg": f"💰 Забрал {win} 💎 (x{sess['mult']})", "win": win}
+
+    # ===== АПГРЕЙД =====
+    elif req.action == "upgrade_start":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
+        src_name, src_price = row
+        target = find_gift(req.target_item)
+        if not target:
+            conn.close(); return {"success": False, "msg": "❌ Цель не найдена"}
+        if target["price"] <= src_price:
+            conn.close(); return {"success": False, "msg": "❌ Цель должна быть дороже"}
+        real_chance = min(0.85, src_price / target["price"])
+        display_chance = round(real_chance * 100 + random.uniform(-5, 5), 1)
+        display_chance = max(5, min(85, display_chance))
+        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+        conn.commit(); conn.close()
+        if random.random() < real_chance:
+            add_inv(req.user_id, target["name"], target["price"])
+            add_feed(req.user_id, "Игрок", "upgrade", f"апгрейднул {src_name} → {target['name']}!")
+            return {"success": True, "result": "win", "src": src_name, "target": target["name"], "chance": display_chance}
+        else:
+            return {"success": True, "result": "lose", "src": src_name, "target": target["name"], "chance": display_chance}
+
+    # ===== БИРЖА =====
+    elif req.action == "market_list":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
+        name, price = row
+        if req.amount < price * 0.5:
+            conn.close(); return {"success": False, "msg": f"❌ Минимум {round(price*0.5, 2)} 💎"}
+        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+        c.execute("INSERT INTO market (seller_id, item_name, item_price, price, status, created_at) VALUES (?,?,?,?, 'active', ?)",
+                  (str(req.user_id), name, price, round(req.amount, 2), int(time.time())))
+        conn.commit(); conn.close()
+        return {"success": True, "msg": f"✅ {name} выставлен за {round(req.amount, 2)} 💎"}
+
+    elif req.action == "market_buy":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT seller_id, item_name, item_price, price FROM market WHERE id=? AND status='active'", (req.market_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Лот не найден"}
+        seller_id, name, orig_price, list_price = row
+        if seller_id == req.user_id:
+            conn.close(); return {"success": False, "msg": "❌ Нельзя купить свой лот"}
+        if get_user(req.user_id)["balance"] < list_price:
+            conn.close(); return {"success": False, "msg": f"❌ Нужно {list_price} 💎"}
+        update_balance(req.user_id, -list_price)
+        update_balance(seller_id, round(list_price * 0.9, 2))
+        add_inv(req.user_id, name, orig_price)
+        c.execute("UPDATE market SET status='sold' WHERE id=?", (req.market_id,))
+        conn.commit(); conn.close()
+        add_feed(req.user_id, "Игрок", "market_buy", f"купил {name} за {list_price} 💎")
+        return {"success": True, "msg": f"✅ Куплено {name} за {list_price} 💎"}
+
+    elif req.action == "market_cancel":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT item_name, item_price FROM market WHERE id=? AND seller_id=? AND status='active'", (req.market_id, str(req.user_id)))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Лот не найден"}
+        name, orig_price = row
+        c.execute("UPDATE market SET status='cancelled' WHERE id=?", (req.market_id,))
+        add_inv(req.user_id, name, orig_price)
+        conn.commit(); conn.close()
+        return {"success": True, "msg": "✅ Лот снят"}
+
+    elif req.action == "market_get":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT id, seller_id, item_name, price FROM market WHERE status='active' AND seller_id != ? ORDER BY price ASC LIMIT 50", (str(req.user_id),))
+        rows = c.fetchall()
+        c.execute("SELECT id, item_name, price FROM market WHERE status='active' AND seller_id = ? ORDER BY price ASC", (str(req.user_id),))
+        own = c.fetchall()
+        conn.close()
+        return {"success": True,
+                "lots": [{"id": r[0], "seller": r[1], "name": r[2], "price": r[3]} for r in rows],
+                "own": [{"id": r[0], "name": r[1], "price": r[2]} for r in own]}
+
+    # ===== ДУЭЛИ =====
+    elif req.action == "duel_create":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
+        name, price = row
+        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+        c.execute("INSERT INTO duels (creator_id, creator_item, creator_price, status, created_at) VALUES (?,?,?, 'waiting', ?)",
+                  (str(req.user_id), name, price, int(time.time())))
+        conn.commit(); conn.close()
+        return {"success": True, "msg": f"✅ Дуэль на {name} создана!"}
+
+    elif req.action == "duel_join":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT creator_id, creator_item, creator_price FROM duels WHERE id=? AND status='waiting'", (req.duel_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close(); return {"success": False, "msg": "❌ Дуэль не найдена"}
+        creator_id, c_item, c_price = row
+        if creator_id == req.user_id:
+            conn.close(); return {"success": False, "msg": "❌ Нельзя с собой"}
+        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
+        row2 = c.fetchone()
+        if not row2:
+            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
+        o_item, o_price = row2
+        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+        if random.random() < 0.5:
+            winner = creator_id
+        else:
+            winner = str(req.user_id)
+        c.execute("UPDATE duels SET opponent_id=?, opponent_item=?, opponent_price=?, status='finished', winner_id=? WHERE id=?",
+                  (str(req.user_id), o_item, o_price, winner, req.duel_id))
+        conn.commit(); conn.close()
+        add_inv(winner, c_item, c_price)
+        add_inv(winner, o_item, o_price)
+        add_feed(winner, "Игрок", "duel_win", f"выиграл дуэль ({c_item} vs {o_item})!")
+        return {"success": True, "you_win": winner == req.user_id, "msg": "🎉 Ты выиграл!" if winner == req.user_id else "💥 Ты проиграл"}
+
+    elif req.action == "duel_list":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT id, creator_id, creator_item, creator_price FROM duels WHERE status='waiting' AND creator_id != ? ORDER BY id DESC LIMIT 20", (str(req.user_id),))
+        rows = c.fetchall(); conn.close()
+        return {"success": True, "duels": [{"id": r[0], "creator": r[1], "item": r[2], "price": r[3]} for r in rows]}
+
+    # ===== ЛЕНТА =====
+    elif req.action == "feed_get":
+        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+        c.execute("SELECT name, action, details, timestamp FROM feed ORDER BY id DESC LIMIT 15")
+        rows = c.fetchall(); conn.close()
+        return {"success": True, "feed": [{"name": r[0], "action": r[1], "details": r[2], "time": r[3]} for r in rows]}
+
+    # ===== СТАТИСТИКА =====
+    elif req.action == "get_stats":
+        stats = get_stats(req.user_id)
+        inv = get_inv(req.user_id)
+        inv_value = sum(i[2] for i in inv)
+        return {"success": True, "stats": stats, "inv_count": len(inv), "inv_value": round(inv_value, 2)}
+
+    return {"success": False, "msg": "Unknown action"}
 
 @app.get("/api/balance/{user_id}")
 def api_balance(user_id: str): return {"balance": get_user(user_id)["balance"]}
@@ -344,28 +522,26 @@ async def game_loop():
         for i in range(10, 0, -1):
             await broadcast({"type": "waiting", "countdown": i, "players": active_bets, "names": player_names})
             await asyncio.sleep(1)
-            
         if not active_bets: continue
-        
         roll = random.uniform(0, 100)
-        if roll < 45: crash_target = random.uniform(1.00, 1.20) 
-        elif roll < 65: crash_target = random.uniform(1.20, 1.50) 
-        elif roll < 95: crash_target = random.uniform(1.50, 5.00) 
-        elif roll < 99.5: crash_target = random.uniform(5.00, 20.00) 
-        else: crash_target = random.uniform(20.00, 150.00) 
-            
+        if roll < 45: crash_target = random.uniform(1.00, 1.20)
+        elif roll < 65: crash_target = random.uniform(1.20, 1.50)
+        elif roll < 95: crash_target = random.uniform(1.50, 5.00)
+        elif roll < 99.5: crash_target = random.uniform(5.00, 20.00)
+        else: crash_target = random.uniform(20.00, 150.00)
         game_state = "flying"; crash_running = True
         await broadcast({"type": "start"})
-        
         while crash_running:
             await asyncio.sleep(0.1)
             crash_mult += 0.015 * crash_mult
-            if crash_mult >= crash_target:
-                crash_running = False
-            else:
-                await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
-                
+            if crash_mult >= crash_target: crash_running = False
+            else: await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
         game_state = "crashed"
+        # статистика проигравшим
+        for uid_l, bet_l in active_bets.items():
+            update_stat(uid_l, "total_lost", bet_l, "inc")
+            update_stat(uid_l, "total_bets", 1, "inc")
+            update_stat(uid_l, "favorite_game", "crash")
         await broadcast({"type": "crash", "multiplier": round(crash_target, 2)})
         await asyncio.sleep(3)
 
@@ -378,22 +554,27 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
             if data.get("action") == "bet":
                 amt = float(data.get("amount", 0))
                 player_names[user_id] = data.get("name", "Игрок")
-                if game_state != "waiting": 
+                if game_state != "waiting":
                     await websocket.send_json({"type": "error", "msg": "Ставки закрыты!"}); continue
-                if amt < 0.10: 
+                if amt < 0.10:
                     await websocket.send_json({"type": "error", "msg": "Мин. ставка 0.10"}); continue
-                
                 if get_user(user_id)["balance"] >= amt:
                     update_balance(user_id, -amt); active_bets[user_id] = amt
                     await broadcast({"type": "waiting", "countdown": "...", "players": active_bets, "names": player_names})
-                else: 
+                else:
                     await websocket.send_json({"type": "error", "msg": "Нет денег"})
-            
             elif data.get("action") == "cashout":
                 if game_state == "flying" and user_id in active_bets:
                     bet = active_bets.pop(user_id); win = round(bet * crash_mult, 2)
-                    update_balance(user_id, win); await websocket.send_json({"type": "cashed_out", "win": win})
-    except WebSocketDisconnect: 
+                    update_balance(user_id, win)
+                    update_stat(user_id, "total_won", win, "inc")
+                    update_stat(user_id, "total_bets", 1, "inc")
+                    update_stat(user_id, "best_crash", round(crash_mult, 2), "max")
+                    update_stat(user_id, "favorite_game", "crash")
+                    if crash_mult >= 5.0:
+                        add_feed(user_id, "Игрок", "crash_win", f"выиграл {win} 💎 на x{round(crash_mult, 2)}!")
+                    await websocket.send_json({"type": "cashed_out", "win": win})
+    except WebSocketDisconnect:
         if websocket in clients: clients.remove(websocket)
 
 # ===== БОТ =====
@@ -401,20 +582,14 @@ async def ws_endpoint(websocket: WebSocket, user_id: str):
 async def cmd_start(message: Message):
     args = message.text.split()
     user_id = str(message.from_user.id)
-    
     if len(args) > 1 and args[1].startswith("ref"):
         ref_id = args[1].replace("ref", "")
-        # Защита от накрутки:
-        # 1. Нельзя переходить по своей ссылке
-        # 2. Награда только если юзер НОВЫЙ (нет в базе до этого)
         if ref_id != user_id and ref_id.isdigit():
             conn = sqlite3.connect(DB_PATH); c = conn.cursor()
             c.execute("SELECT uid FROM users WHERE uid=?", (user_id,))
             already_exists = c.fetchone() is not None
             conn.close()
-            
             if not already_exists:
-                # Юзер новый — создаём запись и начисляем рефереру
                 conn = sqlite3.connect(DB_PATH); c = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO users (uid, balance) VALUES (?, ?)", (user_id, 0.10))
                 conn.commit(); conn.close()
@@ -422,7 +597,6 @@ async def cmd_start(message: Message):
                 try:
                     await bot.send_message(ref_id, "🎉 По твоей ссылке зашёл новый игрок! +0.005 💎")
                 except: pass
-
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🚀 Играть", web_app=WebAppInfo(url=WEB_APP_URL))],
         [InlineKeyboardButton(text="🆘 Анонимная поддержка", callback_data="support")]
