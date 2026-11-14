@@ -363,31 +363,56 @@ async def api_action(req: UserAction):
         del mine_sessions[req.user_id]
         return {"success": True, "msg": f"💰 Забрал {win} 💎 (x{sess['mult']})", "win": win}
 
-    # ===== АПГРЕЙД =====
-    elif req.action == "upgrade_start":
-        conn = sqlite3.connect(DB_PATH); c = conn.cursor()
-        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
-        row = c.fetchone()
-        if not row:
-            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
-        src_name, src_price = row
-        target = find_gift(req.target_item)
-        if not target:
-            conn.close(); return {"success": False, "msg": "❌ Цель не найдена"}
-        if target["price"] <= src_price:
-            conn.close(); return {"success": False, "msg": "❌ Цель должна быть дороже"}
-        real_chance = min(0.85, src_price / target["price"])
-        display_chance = round(real_chance * 100 + random.uniform(-5, 5), 1)
-        display_chance = max(5, min(85, display_chance))
-        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
-        conn.commit(); conn.close()
-        if random.random() < real_chance:
-            add_inv(req.user_id, target["name"], target["price"])
-            add_feed(req.user_id, "Игрок", "upgrade", f"апгрейднул {src_name} → {target['name']}!")
-            return {"success": True, "result": "win", "src": src_name, "target": target["name"], "chance": display_chance}
-        else:
-            return {"success": True, "result": "lose", "src": src_name, "target": target["name"], "chance": display_chance}
-
+    # ===== АПГРЕЙД (новая математика) =====
+elif req.action == "upgrade_start":
+    conn = sqlite3.connect(DB_PATH); c = conn.cursor()
+    c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
+    row = c.fetchone()
+    if not row:
+        conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
+    src_name, src_price = row
+    target = find_gift(req.target_item)
+    if not target:
+        conn.close(); return {"success": False, "msg": "❌ Цель не найдена"}
+    if target["price"] <= src_price:
+        conn.close(); return {"success": False, "msg": "❌ Цель должна быть дороже"}
+    
+    # Базовая формула: чем дороже цель относительно источника, тем ниже шанс
+    ratio = src_price / target["price"]  # 0.0 - 1.0
+    
+    # Штраф за дорогие подарки (защита экономики):
+    # - Дешёвые (<5💎): коэффициент 0.9 (более щедро)
+    # - Средние (5-50💎): 0.7
+    # - Дорогие (50-250💎): 0.5
+    # - Легендарные (>250💎): 0.3 (жёстко)
+    if target["price"] < 5:
+        multiplier = 0.90
+    elif target["price"] < 50:
+        multiplier = 0.70
+    elif target["price"] < 250:
+        multiplier = 0.50
+    else:
+        multiplier = 0.30
+    
+    real_chance = ratio * multiplier
+    real_chance = max(0.03, min(0.80, real_chance))  # от 3% до 80% максимум
+    
+    # Красивый отображаемый шанс (чуть выше реального, чтоб игрок верил)
+    display_chance = real_chance * 100
+    # Добавляем ±3% для живости, но не даём выйти за 2-85
+    display_chance = round(display_chance + random.uniform(-3, 3), 1)
+    display_chance = max(2, min(85, display_chance))
+    
+    c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+    conn.commit(); conn.close()
+    
+    if random.random() < real_chance:
+        add_inv(req.user_id, target["name"], target["price"])
+        add_feed(req.user_id, "Игрок", "upgrade", f"апгрейднул {src_name} → {target['name']}!")
+        return {"success": True, "result": "win", "src": src_name, "target": target["name"], "chance": display_chance}
+    else:
+        return {"success": True, "result": "lose", "src": src_name, "target": target["name"], "chance": display_chance}
+        
     # ===== БИРЖА (без минимума!) =====
     elif req.action == "market_list":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
