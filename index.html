@@ -10,64 +10,19 @@
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: #090a0b; color: #e2e8f0; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* === БАННЕР LEGENDSTARS === */
-.legend-banner {
-    background: linear-gradient(135deg, #064e3b 0%, #0d1112 50%, #7c2d12 100%);
-    border: 1px solid #10b981;
-    border-radius: 16px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), inset 0 0 30px rgba(16, 185, 129, 0.08);
-}
-.legend-banner-glow {
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(52, 211, 153, 0.15), transparent, rgba(250, 204, 21, 0.15), transparent);
-    animation: rotate 6s linear infinite;
-    z-index: 1;
-}
-.legend-banner-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    z-index: 2;
-}
-.legend-crown {
-    font-size: 22px;
-    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.6));
-    animation: pulse 2s infinite;
-}
-.legend-text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-}
-.legend-title {
-    font-size: 16px;
-    font-weight: 900;
-    letter-spacing: 3px;
-    background: linear-gradient(90deg, #34d399, #facc15, #34d399);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shine 3s linear infinite;
-}
-.legend-sub {
-    font-size: 9px;
-    color: #94a3b8;
-    font-weight: 700;
-    letter-spacing: 2px;
-    margin-top: 2px;
-    text-transform: uppercase;
-}
+        .legend-banner { background: linear-gradient(135deg, #064e3b 0%, #0d1112 50%, #7c2d12 100%); border: 1px solid #10b981; border-radius: 16px; padding: 10px 14px; margin-bottom: 12px; position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), inset 0 0 30px rgba(16, 185, 129, 0.08); }
+        .legend-banner-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent, rgba(52, 211, 153, 0.15), transparent, rgba(250, 204, 21, 0.15), transparent); animation: rotate 6s linear infinite; z-index: 1; }
+        .legend-banner-content { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; }
+        .legend-crown { font-size: 22px; filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.6)); animation: pulse 2s infinite; }
+        .legend-text { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .legend-title { font-size: 16px; font-weight: 900; letter-spacing: 3px; background: linear-gradient(90deg, #34d399, #facc15, #34d399); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shine 3s linear infinite; }
+        .legend-sub { font-size: 9px; color: #94a3b8; font-weight: 700; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
 
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .feed-ticker { background: linear-gradient(90deg, #0d1112, #121618, #0d1112); border: 1px solid #1f2926; border-radius: 12px; padding: 6px 12px; margin-bottom: 10px; overflow: hidden; height: 32px; display: flex; align-items: center; position: relative; }
+        .feed-ticker-content { display: flex; gap: 30px; white-space: nowrap; animation: ticker 40s linear infinite; font-size: 12px; color: #94a3b8; }
+        .feed-ticker-content span { color: #34d399; font-weight: 900; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .balance-box { background: linear-gradient(135deg, #064e3b, #10b981); padding: 10px 20px; border-radius: 15px; font-weight: 900; font-size: 18px; color: #fff; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); animation: pulse 3s infinite; }
         
         .tabs { display: flex; background: #121618; padding: 5px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; overflow-x: auto; }
@@ -123,7 +78,6 @@
         .info-text { font-size: 14px; color: #94a3b8; line-height: 1.6; text-align: left; background: #0d1112; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #1f2926; }
         .promo-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #1f2926; background: #090a0b; color: #10b981; margin-bottom: 15px; text-align: center; font-weight: 900; font-size: 16px; text-transform: uppercase; outline: none; }
 
-        /* === КРАСИВЫЙ ИНФО-БЛОК === */
         .info-hero { background: linear-gradient(135deg, #064e3b 0%, #0d1112 60%); border: 1px solid #10b981; border-radius: 20px; padding: 22px; margin-bottom: 16px; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); }
         .info-hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(16,185,129,0.35), transparent 70%); animation: rotate 8s linear infinite; }
         .info-hero h1 { font-size: 24px; font-weight: 900; margin: 0 0 6px 0; background: linear-gradient(90deg, #34d399, #10b981, #facc15); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; z-index: 2; letter-spacing: 1px; }
@@ -150,7 +104,6 @@
         .social-link:active { transform: scale(0.98); border-color: #10b981; color: #34d399; }
         .social-link .arrow { color: #10b981; font-size: 16px; }
 
-        /* === МИНЫ === */
         .mines-header { background: linear-gradient(135deg, #121618, #0d1112); border: 1px solid #1f2926; border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .mines-header .mines-mult { font-size: 22px; font-weight: 900; color: #facc15; font-family: monospace; }
         .mines-header .mines-info { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
@@ -159,23 +112,53 @@
         .mine-cell:active { transform: scale(0.9); }
         .mine-cell.opened { background: linear-gradient(135deg, #064e3b, #065f46); border-color: #10b981; cursor: default; }
         .mine-cell.boom { background: linear-gradient(135deg, #7f1d1d, #450a0a); border-color: #ef4444; animation: shake 0.4s; }
-        .mine-cell.mine-show { background: #121618; border-color: #ef4444; opacity: 0.7; }
         .mine-cell.disabled { pointer-events: none; }
         .mines-actions { display: flex; gap: 10px; }
         .mines-actions .btn { font-size: 13px; padding: 14px; }
 
+        .market-lot { background: #0d1112; border: 1px solid #1f2926; padding: 12px 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .market-lot .lot-info { flex: 1; }
+        .market-lot .lot-name { font-size: 14px; font-weight: 900; }
+        .market-lot .lot-price { font-size: 12px; color: #10b981; font-weight: 700; }
+        .btn-buy-lot { background: linear-gradient(135deg, #047857, #10b981); color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
+        .btn-cancel-lot { background: #ef4444; color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
+
+        .upgrade-area { background: radial-gradient(circle, #0d1112, #050505); border-radius: 20px; padding: 20px; border: 1px solid #1f2926; margin-bottom: 15px; position: relative; overflow: hidden; }
+        .upgrade-slots { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .upgrade-slot { flex: 1; background: #121618; border: 1px dashed #1f2926; border-radius: 12px; padding: 10px; text-align: center; min-height: 70px; display: flex; flex-direction: column; justify-content: center; }
+        .upgrade-slot .slot-label { font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .upgrade-slot .slot-item { font-size: 13px; font-weight: 900; color: #34d399; }
+        .upgrade-arrow { font-size: 20px; color: #facc15; }
+        .upgrade-chance { text-align: center; font-size: 14px; font-weight: 900; color: #facc15; margin-bottom: 15px; font-family: monospace; }
+
+        .duel-card { background: linear-gradient(135deg, #1f1f23, #0d1112); border: 1px solid #1f2926; padding: 14px; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .duel-card .duel-info { flex: 1; }
+        .duel-card .duel-name { font-size: 13px; font-weight: 900; color: #fff; }
+        .duel-card .duel-price { font-size: 11px; color: #10b981; }
+        .btn-duel-join { background: linear-gradient(135deg, #7c2d12, #f59e0b); color: #fff; border: none; padding: 8px 14px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; }
+
+        .profile-hero { background: linear-gradient(135deg, #064e3b 0%, #0d1112 70%); border: 1px solid #10b981; border-radius: 20px; padding: 20px; margin-bottom: 15px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }
+        .profile-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #047857); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+        .profile-name { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+        .profile-id { font-size: 11px; color: #64748b; font-family: monospace; }
+        .profile-rank { display: inline-block; margin-top: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-size: 11px; font-weight: 900; padding: 5px 12px; border-radius: 10px; letter-spacing: 1px; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-tile { background: linear-gradient(135deg, #121618, #0d1112); border: 1px solid #1f2926; border-radius: 14px; padding: 12px; }
+        .stat-tile .stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
+        .stat-tile .stat-value { font-size: 16px; font-weight: 900; color: #34d399; }
+        .stat-tile .stat-value.warn { color: #facc15; }
+        .stat-tile .stat-value.danger { color: #ef4444; }
+
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes rotate { 100% { transform: rotate(360deg); } }
-        @keyframes shine {
-    0% { background-position: 0% center; }
-    100% { background-position: 200% center; }
-        }
+        @keyframes shine { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
 
-    <!-- БАННЕР LEGENDSTARS -->
     <div class="legend-banner">
         <div class="legend-banner-glow"></div>
         <div class="legend-banner-content">
@@ -192,10 +175,17 @@
         <div class="balance-box">💎 <span id="balance">0.00</span></div>
     </div>
 
+    <div class="feed-ticker">
+        <div class="feed-ticker-content" id="feed-ticker">Загрузка новостей...</div>
+    </div>
+
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('crash', event)">🚀 Ракетка</button>
         <button class="tab-btn" onclick="switchTab('mines', event)">💣 Мины</button>
         <button class="tab-btn" onclick="switchTab('cases', event)">📦 Кейсы</button>
+        <button class="tab-btn" onclick="switchTab('upgrade', event)">🎰 Апгрейд</button>
+        <button class="tab-btn" onclick="switchTab('market', event)">🏦 Биржа</button>
+        <button class="tab-btn" onclick="switchTab('duels', event)">⚔️ Дуэли</button>
         <button class="tab-btn" onclick="switchTab('shop', event)">🛒 Магазин</button>
         <button class="tab-btn" onclick="switchTab('inv', event)">🎒 Инвентарь</button>
         <button class="tab-btn" onclick="switchTab('daily', event)">🎁 Бонус</button>
@@ -227,7 +217,7 @@
             </div>
             <div style="text-align:right;">
                 <div class="mines-info">Открыто</div>
-                <div class="mines-mult" id="mines-opened" style="color:#34d399;">0 / 20</div>
+                <div class="mines-mult" id="mines-opened" style="color:#34d399;">0 / 13</div>
             </div>
         </div>
         <div class="mines-grid" id="mines-grid"></div>
@@ -240,7 +230,7 @@
         </div>
         <div class="info-section" style="margin-top:15px;">
             <div class="section-title">💣 Правила</div>
-            <p>Поле 5×5. Открывай клетки, избегай 5 мин. Чем больше открыл — тем выше множитель. Забери в любой момент!</p>
+            <p>Поле 5×5. Открывай клетки, избегай <b style="color:#ef4444;">12 мин</b>. Чем больше открыл — тем выше множитель. Забери в любой момент!</p>
         </div>
     </div>
 
@@ -254,6 +244,63 @@
             <div class="case-card" onclick="openCase('silver')"><div class="case-icon">🥈</div><div class="case-name">Серебро</div><div class="case-price">5.00 💎</div></div>
             <div class="case-card" onclick="openCase('gold')"><div class="case-icon">🥇</div><div class="case-name">Золото</div><div class="case-price">10.00 💎</div></div>
             <div class="case-card" onclick="openCase('diamond')"><div class="case-icon">💎</div><div class="case-name">Алмаз</div><div class="case-price">20.00 💎</div></div>
+        </div>
+    </div>
+
+    <div id="tab-upgrade" class="tab-content">
+        <div class="info-text" style="text-align:center; margin-bottom:15px;">Апгрейд подарков — рискни и получи дороже!</div>
+        <div class="upgrade-area">
+            <div class="upgrade-slots">
+                <div class="upgrade-slot" id="upg-src">
+                    <div class="slot-label">Твой</div>
+                    <div class="slot-item">—</div>
+                </div>
+                <div class="upgrade-arrow">→</div>
+                <div class="upgrade-slot" id="upg-target">
+                    <div class="slot-label">Цель</div>
+                    <div class="slot-item">—</div>
+                </div>
+            </div>
+            <div class="upgrade-chance" id="upg-chance">Шанс: —</div>
+            <button class="btn" id="btn-upgrade" onclick="upgradeStart()" disabled>АПГРЕЙД</button>
+        </div>
+        <div class="info-section">
+            <div class="section-title">🎁 Твой инвентарь</div>
+            <div id="upg-inv" style="display:grid; grid-template-columns: repeat(3,1fr); gap:8px;"></div>
+        </div>
+        <div class="info-section">
+            <div class="section-title">🎯 Целевой подарок</div>
+            <select id="upg-target-select" class="promo-input" style="text-transform:none;" onchange="selectTarget()">
+                <option value="">— Выбери цель —</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="tab-market" class="tab-content">
+        <div class="info-text" style="text-align:center; margin-bottom:15px;">Биржа подарков — продавай и покупай!</div>
+        <div class="info-section">
+            <div class="section-title">📤 Выставить на продажу</div>
+            <div id="market-my-inv" style="display:grid; grid-template-columns: repeat(2,1fr); gap:8px;"></div>
+        </div>
+        <div class="info-section">
+            <div class="section-title">🛒 Лоты на продаже</div>
+            <div id="market-lots"></div>
+        </div>
+        <div class="info-section">
+            <div class="section-title">📋 Мои лоты</div>
+            <div id="market-own"></div>
+        </div>
+    </div>
+
+    <div id="tab-duels" class="tab-content">
+        <div class="info-text" style="text-align:center; margin-bottom:15px;">Дуэли 1v1 — победитель забирает всё!</div>
+        <div class="info-section">
+            <div class="section-title">⚔️ Создать дуэль</div>
+            <div id="duel-my-inv" style="display:grid; grid-template-columns: repeat(2,1fr); gap:8px;"></div>
+        </div>
+        <div class="info-section">
+            <div class="section-title">🎯 Открытые дуэли</div>
+            <div id="duel-list"></div>
         </div>
     </div>
 
@@ -286,12 +333,21 @@
     </div>
 
     <div id="tab-profile" class="tab-content">
-        <div class="info-text">
-            <b>👤 Профиль</b><br><br>
-            ID: <span id="prof-id">...</span><br>
-            Баланс: <span id="prof-bal" style="color: #10b981; font-weight: 900;">0.00</span> 💎
+        <div class="profile-hero">
+            <div class="profile-avatar" id="prof-avatar">👤</div>
+            <div class="profile-name" id="prof-name">Игрок</div>
+            <div class="profile-id">ID: <span id="prof-id">...</span></div>
+            <div class="profile-rank" id="prof-rank">🐣 Новичок</div>
         </div>
-        <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 10)" step="0.1">
+        <div class="stats-grid">
+            <div class="stat-tile"><div class="stat-label">Баланс</div><div class="stat-value" id="prof-bal">0.00</div></div>
+            <div class="stat-tile"><div class="stat-label">Ставок</div><div class="stat-value" id="stat-bets">0</div></div>
+            <div class="stat-tile"><div class="stat-label">Выиграно</div><div class="stat-value" id="stat-won">0.00</div></div>
+            <div class="stat-tile"><div class="stat-label">Проиграно</div><div class="stat-value danger" id="stat-lost">0.00</div></div>
+            <div class="stat-tile"><div class="stat-label">Лучший краш</div><div class="stat-value warn" id="stat-crash">x0.00</div></div>
+            <div class="stat-tile"><div class="stat-label">Инвентарь</div><div class="stat-value" id="stat-inv">0 💎</div></div>
+        </div>
+                <input type="number" id="withdraw-amount" class="promo-input" placeholder="СУММА ВЫВОДА (от 10)" step="0.1">
         <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="requestWithdraw()">💸 Вывести</button>
         <input type="text" id="promo-code" class="promo-input" placeholder="ПРОМОКОД">
         <button class="btn" style="margin-bottom: 15px;" onclick="activatePromo()">АКТИВИРОВАТЬ</button>
@@ -303,7 +359,7 @@
         <div class="info-hero">
             <h1>LEGENDSTARS 🚀</h1>
             <p>Мини-игра с реальными наградами. Играй, собирай подарки, выводи звёзды!</p>
-            <span class="version-badge">v4.0 • 2026</span>
+            <span class="version-badge">v5.0 • 2026</span>
         </div>
         <div class="info-grid">
             <div class="info-tile"><span class="tile-icon">💸</span><div class="tile-label">Вывод</div><div class="tile-value">от 10 💎</div></div>
@@ -316,8 +372,9 @@
             <div class="rule-row"><span class="rule-label">💎 Вывод средств</span><span class="rule-value">от 10 💎</span></div>
             <div class="rule-row"><span class="rule-label">⭐ Комиссия вывода</span><span class="rule-value">10 ⭐ за 1 💎</span></div>
             <div class="rule-row"><span class="rule-label">🚀 Мин. ставка</span><span class="rule-value">0.10 💎</span></div>
-            <div class="rule-row"><span class="rule-label">💣 Мины (поле)</span><span class="rule-value">5×5, 5 мин</span></div>
+            <div class="rule-row"><span class="rule-label">💣 Мины (поле)</span><span class="rule-value">5×5, 12 мин</span></div>
             <div class="rule-row"><span class="rule-label">📦 Продажа подарка</span><span class="rule-value">80% цены</span></div>
+            <div class="rule-row"><span class="rule-label">🏦 Биржа (комиссия)</span><span class="rule-value">10%</span></div>
             <div class="rule-row"><span class="rule-label">🔗 Рефералка</span><span class="rule-value">+0.005 💎</span></div>
         </div>
         <div class="info-section">
@@ -345,6 +402,7 @@
         let ws;
         
         document.getElementById('prof-id').innerText = userId;
+        document.getElementById('prof-name').innerText = userName;
 
         function showAlert(msg) {
             if (tg && tg.showAlert) { tg.showAlert(msg); } else { alert(msg); }
@@ -369,6 +427,10 @@
             if(tab === 'inv') loadInventory();
             if(tab === 'shop') loadShop();
             if(tab === 'mines') renderMinesGrid();
+            if(tab === 'upgrade') loadUpgrade();
+            if(tab === 'market') loadMarket();
+            if(tab === 'duels') loadDuels();
+            if(tab === 'profile') loadProfile();
         }
 
         async function apiAction(action, data = {}) {
@@ -381,7 +443,6 @@
             } catch (e) { return { success: false, msg: "Ошибка сети" }; }
         }
 
-        // ===== ЕЖЕДНЕВНЫЙ БОНУС =====
         async function openDaily() {
             const btn = document.getElementById('btn-daily');
             btn.disabled = true;
@@ -419,18 +480,15 @@
             else window.open(link, '_blank');
         }
 
-        // ===== КЕЙСЫ =====
         async function openCase(caseId) {
             const caseCards = document.querySelectorAll('#tab-cases .case-card');
             caseCards.forEach(c => c.style.pointerEvents = 'none');
-
             const res = await apiAction("open_case", { case_id: caseId });
             if (!res.success) {
                 showAlert(res.msg);
                 caseCards.forEach(c => c.style.pointerEvents = 'auto');
                 return;
             }
-            
             const strip = document.getElementById('roulette-strip');
             strip.innerHTML = '';
             const icons = ['🧸', '🌹', '🍰', '💎', '🚀', '👑', '🎁', '🎈', '🍕', '🐉', '🦄'];
@@ -441,17 +499,14 @@
                 el.innerText = (i === winIndex) ? res.item.split(' ')[0] : icons[Math.floor(Math.random() * icons.length)];
                 strip.appendChild(el);
             }
-            
             strip.style.transition = 'none'; 
             strip.style.transform = 'translateX(0)';
             void strip.offsetWidth; 
-
             setTimeout(() => {
                 strip.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
                 let offset = (winIndex * 80) - (window.innerWidth / 2) + 40; 
                 strip.style.transform = `translateX(-${offset}px)`;
             }, 50);
-
             setTimeout(() => { 
                 showAlert(`🎉 Выпало: ${res.item} (${res.price} 💎)`); 
                 loadBalance(); 
@@ -459,17 +514,14 @@
             }, 4000);
         }
 
-        // ===== МАГАЗИН =====
         async function loadShop() {
             const res = await apiAction("get_shop");
             const list = document.getElementById('shop-list');
             list.innerHTML = '';
             if (!res.success) return;
-            
             let allShop = [];
             for (let cat in res.shop) { allShop = allShop.concat(res.shop[cat]); }
             allShop.sort((a, b) => a.price - b.price);
-
             allShop.forEach((item) => {
                 const el = document.createElement('div');
                 el.className = 'case-card';
@@ -482,10 +534,7 @@
                     <button class="btn btn-secondary buy-btn" style="margin-top:5px; padding:8px; position:relative; z-index:5;">Купить</button>
                 `;
                 const btn = el.querySelector('.buy-btn');
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    buyShop(item.name, btn);
-                });
+                btn.addEventListener('click', (e) => { e.stopPropagation(); buyShop(item.name, btn); });
                 list.appendChild(el);
             });
         }
@@ -501,7 +550,6 @@
             if (btn) { btn.disabled = false; btn.innerText = "Купить"; }
         }
 
-        // ===== ИНВЕНТАРЬ =====
         async function loadInventory() {
             const res = await apiAction("get_inv");
             const list = document.getElementById('inventory-list');
@@ -546,6 +594,255 @@
             }
         }
 
+        // ===== ЛЕНТА =====
+        async function loadFeed() {
+            const res = await apiAction("feed_get");
+            const el = document.getElementById('feed-ticker');
+            if (res.success && res.feed.length > 0) {
+                let html = '';
+                res.feed.forEach(f => {
+                    html += `<span>👤 Игрок</span> ${f.details} &nbsp;&nbsp;•&nbsp;&nbsp; `;
+                });
+                el.innerHTML = html;
+            } else {
+                el.innerHTML = 'Пока нет новостей...';
+            }
+        }
+
+        // ===== ПРОФИЛЬ =====
+        async function loadProfile() {
+            const res = await apiAction("get_stats");
+            if (!res.success) return;
+            const s = res.stats;
+            document.getElementById('stat-bets').innerText = s.total_bets;
+            document.getElementById('stat-won').innerText = s.total_won.toFixed(2);
+            document.getElementById('stat-lost').innerText = s.total_lost.toFixed(2);
+            document.getElementById('stat-crash').innerText = `x${s.best_crash.toFixed(2)}`;
+            document.getElementById('stat-inv').innerText = `${res.inv_count} шт (${res.inv_value} 💎)`;
+            let rank = "🐣 Новичок";
+            if (s.total_bets >= 10) rank = "⚔️ Воин";
+            if (s.total_bets >= 50) rank = "🏹 Охотник";
+            if (s.total_bets >= 200) rank = "🛡️ Рыцарь";
+            if (s.total_bets >= 500) rank = "🏰 Барон";
+            if (s.total_bets >= 2000) rank = "👑 Герцог";
+            if (s.total_bets >= 10000) rank = "🌟 Легенда";
+            document.getElementById('prof-rank').innerText = rank;
+        }
+
+        // ===== АПГРЕЙД =====
+        let upgSelectedItem = null;
+        let upgSelectedTarget = null;
+
+        async function loadUpgrade() {
+            const res = await apiAction("get_inv");
+            const invDiv = document.getElementById('upg-inv');
+            invDiv.innerHTML = '';
+            if (!res.success || res.inv.length === 0) {
+                invDiv.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; font-size:12px;">Инвентарь пуст</div>';
+            } else {
+                res.inv.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'case-card';
+                    el.style.padding = '10px';
+                    el.style.fontSize = '11px';
+                    const icon = item.name.split(' ')[0];
+                    el.innerHTML = `<div style="font-size:20px;">${icon}</div><div style="font-weight:900;">${item.price} 💎</div>`;
+                    el.onclick = () => {
+                        upgSelectedItem = item;
+                        document.querySelector('#upg-src .slot-item').innerText = item.name;
+                        updateUpgradeUI();
+                    };
+                    invDiv.appendChild(el);
+                });
+            }
+            const shopRes = await apiAction("get_shop");
+            if (shopRes.success) {
+                const select = document.getElementById('upg-target-select');
+                select.innerHTML = '<option value="">— Выбери цель —</option>';
+                const all = [];
+                for (let cat in shopRes.shop) all.push(...shopRes.shop[cat]);
+                all.sort((a,b) => a.price - b.price);
+                all.forEach(g => {
+                    select.innerHTML += `<option value="${g.name}" data-price="${g.price}">${g.name} — ${g.price} 💎</option>`;
+                });
+            }
+        }
+
+        function selectTarget() {
+            const select = document.getElementById('upg-target-select');
+            const val = select.value;
+            if (!val) { upgSelectedTarget = null; updateUpgradeUI(); return; }
+            upgSelectedTarget = val;
+            document.querySelector('#upg-target .slot-item').innerText = val;
+            updateUpgradeUI();
+        }
+
+        function updateUpgradeUI() {
+            const btn = document.getElementById('btn-upgrade');
+            const chanceEl = document.getElementById('upg-chance');
+            if (!upgSelectedItem || !upgSelectedTarget) {
+                chanceEl.innerText = 'Шанс: —';
+                btn.disabled = true;
+                return;
+            }
+            const sel = document.getElementById('upg-target-select');
+            const opt = sel.options[sel.selectedIndex];
+            const targetPrice = parseFloat(opt.dataset.price);
+            const chance = Math.min(85, Math.round((upgSelectedItem.price / targetPrice) * 100));
+            chanceEl.innerText = `Шанс: ~${chance}%`;
+            btn.disabled = false;
+        }
+
+        async function upgradeStart() {
+            if (!upgSelectedItem || !upgSelectedTarget) return;
+            const btn = document.getElementById('btn-upgrade');
+            btn.disabled = true; btn.innerText = "⏳";
+            const targetName = upgSelectedTarget;
+            const res = await apiAction("upgrade_start", { item_id: upgSelectedItem.id, target_item: targetName });
+            if (!res.success) {
+                showAlert(res.msg || "Ошибка");
+                btn.disabled = false; btn.innerText = "АПГРЕЙД";
+                return;
+            }
+            if (res.result === "win") {
+                showAlert(`🎉 УСПЕХ! ${res.src} → ${res.target} (шанс ${res.chance}%)`);
+            } else {
+                showAlert(`💥 Провал! ${res.src} сгорел (шанс ${res.chance}%)`);
+            }
+            upgSelectedItem = null;
+            upgSelectedTarget = null;
+            document.querySelector('#upg-src .slot-item').innerText = '—';
+            document.querySelector('#upg-target .slot-item').innerText = '—';
+            document.getElementById('upg-target-select').value = '';
+            document.getElementById('upg-chance').innerText = 'Шанс: —';
+            btn.innerText = "АПГРЕЙД";
+            loadBalance();
+            loadUpgrade();
+        }
+
+        // ===== БИРЖА =====
+        async function loadMarket() {
+            const res = await apiAction("market_get");
+            const invRes = await apiAction("get_inv");
+            const ownDiv = document.getElementById('market-own');
+            ownDiv.innerHTML = '';
+            if (res.success && res.own.length > 0) {
+                res.own.forEach(lot => {
+                    const el = document.createElement('div');
+                    el.className = 'market-lot';
+                    el.innerHTML = `<div class="lot-info"><div class="lot-name">${lot.name}</div><div class="lot-price">${lot.price} 💎</div></div><button class="btn-cancel-lot">Снять</button>`;
+                    el.querySelector('.btn-cancel-lot').onclick = () => marketCancel(lot.id);
+                    ownDiv.appendChild(el);
+                });
+            } else {
+                ownDiv.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px;">Нет лотов</div>';
+            }
+            const lotsDiv = document.getElementById('market-lots');
+            lotsDiv.innerHTML = '';
+            if (res.success && res.lots.length > 0) {
+                res.lots.forEach(lot => {
+                    const el = document.createElement('div');
+                    el.className = 'market-lot';
+                    el.innerHTML = `<div class="lot-info"><div class="lot-name">${lot.name}</div><div class="lot-price">${lot.price} 💎</div></div><button class="btn-buy-lot">Купить</button>`;
+                    el.querySelector('.btn-buy-lot').onclick = () => marketBuy(lot.id);
+                    lotsDiv.appendChild(el);
+                });
+            } else {
+                lotsDiv.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px;">Лотов нет</div>';
+            }
+            const myDiv = document.getElementById('market-my-inv');
+            myDiv.innerHTML = '';
+            if (invRes.success && invRes.inv.length > 0) {
+                invRes.inv.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'case-card';
+                    el.style.padding = '10px';
+                    el.style.fontSize = '11px';
+                    const icon = item.name.split(' ')[0];
+                    el.innerHTML = `<div style="font-size:20px;">${icon}</div><div style="font-weight:900;">${item.price} 💎</div><button class="btn btn-secondary" style="padding:4px; margin-top:4px; font-size:10px; position:relative; z-index:5;">Продать</button>`;
+                    el.querySelector('button').onclick = (e) => {
+                        e.stopPropagation();
+                        const price = prompt(`Цена за ${item.name} (мин ${(item.price * 0.5).toFixed(2)}):`, (item.price).toFixed(2));
+                        if (price) marketList(item.id, parseFloat(price));
+                    };
+                    myDiv.appendChild(el);
+                });
+            } else {
+                myDiv.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; font-size:12px;">Инвентарь пуст</div>';
+            }
+        }
+
+        async function marketList(itemId, price) {
+            if (!price || price <= 0) return;
+            const res = await apiAction("market_list", { item_id: itemId, amount: price });
+            showAlert(res.msg);
+            if (res.success) loadMarket();
+        }
+
+        async function marketBuy(lotId) {
+            const res = await apiAction("market_buy", { market_id: lotId });
+            showAlert(res.msg);
+            if (res.success) { loadBalance(); loadMarket(); }
+        }
+
+        async function marketCancel(lotId) {
+            const res = await apiAction("market_cancel", { market_id: lotId });
+            showAlert(res.msg);
+            if (res.success) loadMarket();
+        }
+
+        // ===== ДУЭЛИ =====
+        async function loadDuels() {
+            const res = await apiAction("duel_list");
+            const invRes = await apiAction("get_inv");
+            const listDiv = document.getElementById('duel-list');
+            listDiv.innerHTML = '';
+            if (res.success && res.duels.length > 0) {
+                res.duels.forEach(d => {
+                    const el = document.createElement('div');
+                    el.className = 'duel-card';
+                    el.innerHTML = `<div class="duel-info"><div class="duel-name">${d.item}</div><div class="duel-price">${d.price} 💎</div></div><button class="btn-duel-join">Вступить</button>`;
+                    el.querySelector('.btn-duel-join').onclick = () => joinDuel(d.id, invRes.inv);
+                    listDiv.appendChild(el);
+                });
+            } else {
+                listDiv.innerHTML = '<div style="text-align:center; color:#64748b; font-size:12px;">Открытых дуэлей нет</div>';
+            }
+            const myDiv = document.getElementById('duel-my-inv');
+            myDiv.innerHTML = '';
+            if (invRes.success && invRes.inv.length > 0) {
+                invRes.inv.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'case-card';
+                    el.style.padding = '10px';
+                    el.style.fontSize = '11px';
+                    const icon = item.name.split(' ')[0];
+                    el.innerHTML = `<div style="font-size:20px;">${icon}</div><div style="font-weight:900;">${item.price} 💎</div><button class="btn btn-secondary" style="padding:4px; margin-top:4px; font-size:10px; position:relative; z-index:5;">Создать</button>`;
+                    el.querySelector('button').onclick = (e) => {
+                        e.stopPropagation();
+                        duelCreate(item.id);
+                    };
+                    myDiv.appendChild(el);
+                });
+            } else {
+                myDiv.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#64748b; font-size:12px;">Инвентарь пуст</div>';
+            }
+        }
+
+        async function duelCreate(itemId) {
+            const res = await apiAction("duel_create", { item_id: itemId });
+            showAlert(res.msg);
+            if (res.success) loadDuels();
+        }
+
+        async function joinDuel(duelId, myInv) {
+            if (!myInv || myInv.length === 0) return showAlert("Инвентарь пуст");
+            const itemId = myInv[0].id;
+            const res = await apiAction("duel_join", { duel_id: duelId, item_id: itemId });
+            showAlert(res.msg);
+            if (res.success) { loadBalance(); loadDuels(); }
+        }
+
         // ===== МИНЫ =====
         let minesActive = false;
 
@@ -570,12 +867,10 @@
             btn.disabled = true;
             const res = await apiAction("mines_start", { amount: bet });
             if (!res.success) { showAlert(res.msg); btn.disabled = false; return; }
-            
             minesActive = true;
             document.getElementById('mines-mult').innerText = "x1.00";
-            document.getElementById('mines-opened').innerText = "0 / 20";
+            document.getElementById('mines-opened').innerText = "0 / 13";
             document.getElementById('btn-mines-cashout').style.display = 'none';
-            
             const grid = document.getElementById('mines-grid');
             grid.innerHTML = '';
             for (let i = 0; i < 25; i++) {
@@ -592,13 +887,11 @@
             if (!minesActive || cell.classList.contains('opened') || cell.classList.contains('disabled')) return;
             cell.classList.add('disabled');
             const res = await apiAction("mines_open", { cell: idx });
-            
             if (!res.success) {
                 showAlert(res.msg);
                 cell.classList.remove('disabled');
                 return;
             }
-
             if (res.result === "boom") {
                 cell.classList.add('boom');
                 cell.innerText = "💣";
@@ -613,7 +906,7 @@
                 cell.innerText = "💎";
                 cell.classList.remove('disabled');
                 document.getElementById('mines-mult').innerText = `x${res.mult.toFixed(2)}`;
-                document.getElementById('mines-opened').innerText = `${res.opened.length} / 20`;
+                document.getElementById('mines-opened').innerText = `${res.opened.length} / 13`;
                 document.getElementById('btn-mines-cashout').style.display = 'block';
                 loadBalance();
             }
@@ -638,7 +931,6 @@
         function connectWS() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             ws = new WebSocket(`${protocol}//${window.location.host}/ws/${userId}`);
-            
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 const elMult = document.getElementById('crash-multiplier');
@@ -655,7 +947,6 @@
                     elRocket.style.bottom = "-50px"; elRocket.style.left = "0px"; elRocket.style.opacity = "1";
                     btnBet.disabled = isBetPlaced ? true : false;
                     if(!isBetPlaced) btnCashout.style.display = 'none';
-                    
                     liveBets.innerHTML = '';
                     if (Object.keys(data.players).length === 0) {
                         liveBets.innerHTML = '<div style="color:#64748b; text-align:center;">Пока никто не ставил</div>';
@@ -683,7 +974,6 @@
                     document.getElementById('crash-status').innerText = `КРАШ НА x${data.multiplier.toFixed(2)}`;
                     elMult.innerText = `x${data.multiplier.toFixed(2)}`; elMult.className = "multiplier crashed";
                     elRocket.style.opacity = "0"; btnCashout.style.display = 'none'; btnBet.disabled = false; isBetPlaced = false;
-                    
                     const histBar = document.getElementById('history-bar');
                     const newItem = document.createElement('div');
                     newItem.className = 'history-item crash'; newItem.innerText = `x${data.multiplier.toFixed(2)}`;
@@ -692,7 +982,6 @@
                 else if (data.type === 'cashed_out') {
                     showAlert(`Вывел ${data.win} 💎 на x${currentMult.toFixed(2)}!`);
                     loadBalance(); btnCashout.style.display = 'none'; btnBet.disabled = true;
-                    
                     const histBar = document.getElementById('history-bar');
                     const newItem = document.createElement('div');
                     newItem.className = 'history-item'; newItem.innerText = `x${currentMult.toFixed(2)}`;
@@ -719,6 +1008,8 @@
 
         renderMinesGrid();
         loadBalance(); connectWS();
+        loadFeed();
+        setInterval(loadFeed, 30000);
     </script>
 </body>
 </html>
