@@ -35,13 +35,31 @@ class SupportState(StatesGroup):
 # ===== БАЗА =====
 DB_PATH = "casino.db"
 
+# WAL mode — убивает лаги SQLite (параллельные чтения не блокируют запись)
+def _init_wal():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.close()
+_init_wal()
+
 def init_db():
     conn = sqlite3.connect(DB_PATH); c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (uid TEXT PRIMARY KEY, balance REAL, last_bonus INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, amount REAL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT, item_name TEXT, item_price REAL, date TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS market (id INTEGER PRIMARY KEY AUTOINCREMENT, seller_id TEXT, item_name TEXT, item_price REAL, price REAL, status TEXT DEFAULT 'active', created_at INTEGER)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS duels (id INTEGER PRIMARY KEY AUTOINCREMENT, creator_id TEXT, creator_item TEXT, creator_price REAL, opponent_id TEXT, opponent_item TEXT, opponent_price REAL, status TEXT DEFAULT 'waiting', winner_id TEXT, created_at INTEGER)''')
+    # ДУЭЛИ ТЕПЕРЬ НА АЛМАЗЫ
+    c.execute('''CREATE TABLE IF NOT EXISTS duels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creator_id TEXT,
+        stake REAL,
+        opponent_id TEXT,
+        status TEXT DEFAULT 'waiting',
+        winner_id TEXT,
+        created_at INTEGER
+    )''')
     c.execute('''CREATE TABLE IF NOT EXISTS stats (uid TEXT PRIMARY KEY, total_bets INTEGER DEFAULT 0, total_won REAL DEFAULT 0, total_lost REAL DEFAULT 0, best_crash REAL DEFAULT 0, favorite_game TEXT DEFAULT 'none')''')
     c.execute('''CREATE TABLE IF NOT EXISTS feed (id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT, name TEXT, action TEXT, details TEXT, timestamp INTEGER)''')
     conn.commit(); conn.close()
@@ -370,7 +388,7 @@ async def api_action(req: UserAction):
         else:
             return {"success": True, "result": "lose", "src": src_name, "target": target["name"], "chance": display_chance}
 
-    # ===== БИРЖА =====
+    # ===== БИРЖА (без минимума!) =====
     elif req.action == "market_list":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
         c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
@@ -378,8 +396,8 @@ async def api_action(req: UserAction):
         if not row:
             conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
         name, price = row
-        if req.amount < price * 0.5:
-            conn.close(); return {"success": False, "msg": f"❌ Минимум {round(price*0.5, 2)} 💎"}
+        if req.amount <= 0:
+            conn.close(); return {"success": False, "msg": "❌ Цена должна быть больше 0"}
         c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
         c.execute("INSERT INTO market (seller_id, item_name, item_price, price, status, created_at) VALUES (?,?,?,?, 'active', ?)",
                   (str(req.user_id), name, price, round(req.amount, 2), int(time.time())))
@@ -397,11 +415,12 @@ async def api_action(req: UserAction):
             conn.close(); return {"success": False, "msg": "❌ Нельзя купить свой лот"}
         if get_user(req.user_id)["balance"] < list_price:
             conn.close(); return {"success": False, "msg": f"❌ Нужно {list_price} 💎"}
+        # ЗАКРЫВАЕМ соединение ДО хелперов (фикс зависания!)
+        c.execute("UPDATE market SET status='sold' WHERE id=?", (req.market_id,))
+        conn.commit(); conn.close()
         update_balance(req.user_id, -list_price)
         update_balance(seller_id, round(list_price * 0.9, 2))
         add_inv(req.user_id, name, orig_price)
-        c.execute("UPDATE market SET status='sold' WHERE id=?", (req.market_id,))
-        conn.commit(); conn.close()
         add_feed(req.user_id, "Игрок", "market_buy", f"купил {name} за {list_price} 💎")
         return {"success": True, "msg": f"✅ Куплено {name} за {list_price} 💎"}
 
@@ -413,8 +432,9 @@ async def api_action(req: UserAction):
             conn.close(); return {"success": False, "msg": "❌ Лот не найден"}
         name, orig_price = row
         c.execute("UPDATE market SET status='cancelled' WHERE id=?", (req.market_id,))
-        add_inv(req.user_id, name, orig_price)
+        # ЗАКРЫВАЕМ соединение ДО add_inv (фикс зависания!)
         conn.commit(); conn.close()
+        add_inv(req.user_id, name, orig_price)
         return {"success": True, "msg": "✅ Лот снят"}
 
     elif req.action == "market_get":
@@ -428,52 +448,55 @@ async def api_action(req: UserAction):
                 "lots": [{"id": r[0], "seller": r[1], "name": r[2], "price": r[3]} for r in rows],
                 "own": [{"id": r[0], "name": r[1], "price": r[2]} for r in own]}
 
-    # ===== ДУЭЛИ =====
+    # ===== ДУЭЛИ НА АЛМАЗЫ =====
     elif req.action == "duel_create":
+        stake = req.amount
+        if stake < 0.10:
+            return {"success": False, "msg": "❌ Мин. ставка 0.10 💎"}
+        if get_user(req.user_id)["balance"] < stake:
+            return {"success": False, "msg": "❌ Недостаточно средств"}
+        # Списываем сразу у создателя
+        update_balance(req.user_id, -stake)
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
-        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
-        row = c.fetchone()
-        if not row:
-            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
-        name, price = row
-        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
-        c.execute("INSERT INTO duels (creator_id, creator_item, creator_price, status, created_at) VALUES (?,?,?, 'waiting', ?)",
-                  (str(req.user_id), name, price, int(time.time())))
+        c.execute("INSERT INTO duels (creator_id, stake, status, created_at) VALUES (?, ?, 'waiting', ?)",
+                  (str(req.user_id), round(stake, 2), int(time.time())))
         conn.commit(); conn.close()
-        return {"success": True, "msg": f"✅ Дуэль на {name} создана!"}
+        return {"success": True, "msg": f"✅ Дуэль на {stake} 💎 создана! Ждём соперника."}
 
     elif req.action == "duel_join":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
-        c.execute("SELECT creator_id, creator_item, creator_price FROM duels WHERE id=? AND status='waiting'", (req.duel_id,))
+        c.execute("SELECT creator_id, stake FROM duels WHERE id=? AND status='waiting'", (req.duel_id,))
         row = c.fetchone()
         if not row:
             conn.close(); return {"success": False, "msg": "❌ Дуэль не найдена"}
-        creator_id, c_item, c_price = row
+        creator_id, stake = row
         if creator_id == req.user_id:
-            conn.close(); return {"success": False, "msg": "❌ Нельзя с собой"}
-        c.execute("SELECT item_name, item_price FROM inventory WHERE id=? AND uid=?", (req.item_id, str(req.user_id)))
-        row2 = c.fetchone()
-        if not row2:
-            conn.close(); return {"success": False, "msg": "❌ Подарок не найден"}
-        o_item, o_price = row2
-        c.execute("DELETE FROM inventory WHERE id=?", (req.item_id,))
+            conn.close(); return {"success": False, "msg": "❌ Нельзя играть с собой"}
+        if get_user(req.user_id)["balance"] < stake:
+            conn.close(); return {"success": False, "msg": f"❌ Нужно {stake} 💎"}
+        # Списываем у соперника и закрываем
+        update_balance(req.user_id, -stake)
         if random.random() < 0.5:
             winner = creator_id
         else:
             winner = str(req.user_id)
-        c.execute("UPDATE duels SET opponent_id=?, opponent_item=?, opponent_price=?, status='finished', winner_id=? WHERE id=?",
-                  (str(req.user_id), o_item, o_price, winner, req.duel_id))
+        # Победитель получает ВЕСЬ банк (2 ставки), минус 10% комиссия
+        bank = stake * 2
+        win_amount = round(bank * 0.9, 2)
+        c.execute("UPDATE duels SET opponent_id=?, status='finished', winner_id=? WHERE id=?",
+                  (str(req.user_id), winner, req.duel_id))
         conn.commit(); conn.close()
-        add_inv(winner, c_item, c_price)
-        add_inv(winner, o_item, o_price)
-        add_feed(winner, "Игрок", "duel_win", f"выиграл дуэль ({c_item} vs {o_item})!")
-        return {"success": True, "you_win": winner == req.user_id, "msg": "🎉 Ты выиграл!" if winner == req.user_id else "💥 Ты проиграл"}
+        update_balance(winner, win_amount)
+        update_stat(winner, "total_won", win_amount, "inc")
+        add_feed(winner, "Игрок", "duel_win", f"выиграл дуэль на {stake} 💎 (банк {win_amount} 💎)!")
+        return {"success": True, "you_win": winner == req.user_id, "win_amount": win_amount,
+                "msg": f"🎉 Ты выиграл {win_amount} 💎!" if winner == req.user_id else f"💥 Ты проиграл {stake} 💎"}
 
     elif req.action == "duel_list":
         conn = sqlite3.connect(DB_PATH); c = conn.cursor()
-        c.execute("SELECT id, creator_id, creator_item, creator_price FROM duels WHERE status='waiting' AND creator_id != ? ORDER BY id DESC LIMIT 20", (str(req.user_id),))
+        c.execute("SELECT id, creator_id, stake FROM duels WHERE status='waiting' AND creator_id != ? ORDER BY id DESC LIMIT 20", (str(req.user_id),))
         rows = c.fetchall(); conn.close()
-        return {"success": True, "duels": [{"id": r[0], "creator": r[1], "item": r[2], "price": r[3]} for r in rows]}
+        return {"success": True, "duels": [{"id": r[0], "creator": r[1], "stake": r[2]} for r in rows]}
 
     # ===== ЛЕНТА =====
     elif req.action == "feed_get":
@@ -537,7 +560,6 @@ async def game_loop():
             if crash_mult >= crash_target: crash_running = False
             else: await broadcast({"type": "tick", "multiplier": round(crash_mult, 2)})
         game_state = "crashed"
-        # статистика проигравшим
         for uid_l, bet_l in active_bets.items():
             update_stat(uid_l, "total_lost", bet_l, "inc")
             update_stat(uid_l, "total_bets", 1, "inc")
